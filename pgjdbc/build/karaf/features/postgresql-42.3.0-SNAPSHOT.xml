@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<features xmlns="http://karaf.apache.org/xmlns/features/v1.5.0" name="postgresql">
+  <feature name="postgresql" version="42.3.0-SNAPSHOT" description="PostgreSQL JDBC driver karaf feature">
+    <details>Java JDBC 4.2 (JRE 8+) driver for PostgreSQL database</details>
+    <feature>transaction-api</feature>
+    <bundle>mvn:org.postgresql/postgresql/42.3.0-SNAPSHOT</bundle>
+  </feature>
+</features>

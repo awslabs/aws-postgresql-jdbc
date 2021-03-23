@@ -1,0 +1,194 @@
+/*
+ * Copyright (c) 2004, PostgreSQL Global Development Group
+ * See the LICENSE file in the project root for more information.
+ */
+// Copyright (c) 2004, Open Cloud Limited.
+
+package org.postgresql.util;
+
+import static org.postgresql.util.internal.Nullness.castNonNull;
+
+// import org.checkerframework.checker.nullness.qual.Nullable;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+/**
+ * Wrapper around a length-limited InputStream.
+ *
+ * @author Oliver Jowett (oliver@opencloud.com)
+ */
+public class StreamWrapper {
+
+  private static final int MAX_MEMORY_BUFFER_BYTES = 51200;
+
+  private static final String TEMP_FILE_PREFIX = "postgres-pgjdbc-stream";
+
+  public StreamWrapper(byte[] data, int offset, int length) {
+    this.stream = null;
+    this.rawData = data;
+    this.offset = offset;
+    this.length = length;
+  }
+
+  public StreamWrapper(InputStream stream, int length) {
+    this.stream = stream;
+    this.rawData = null;
+    this.offset = 0;
+    this.length = length;
+  }
+
+  public StreamWrapper(InputStream stream) throws PSQLException {
+    try {
+      ByteArrayOutputStream memoryOutputStream = new ByteArrayOutputStream();
+      final int memoryLength = copyStream(stream, memoryOutputStream, MAX_MEMORY_BUFFER_BYTES);
+      byte[] rawData = memoryOutputStream.toByteArray();
+
+      if (memoryLength == -1) {
+        final int diskLength;
+        final File tempFile = File.createTempFile(TEMP_FILE_PREFIX, null);
+        FileOutputStream diskOutputStream = new FileOutputStream(tempFile);
+        diskOutputStream.write(rawData);
+        try {
+          diskLength = copyStream(stream, diskOutputStream, Integer.MAX_VALUE - rawData.length);
+          if (diskLength == -1) {
+            throw new PSQLException(GT.tr("Object is too large to send over the protocol."),
+                PSQLState.NUMERIC_CONSTANT_OUT_OF_RANGE);
+          }
+          diskOutputStream.flush();
+        } finally {
+          diskOutputStream.close();
+        }
+        this.offset = 0;
+        this.length = rawData.length + diskLength;
+        this.rawData = null;
+        this.stream = new FileInputStream(tempFile) {
+          /*
+           * Usually, closing stream should be done by pgjdbc clients. Here it's an internally
+           * managed stream so we need to auto-close it and be sure to delete the temporary file
+           * when doing so. Auto-closing will be done when the first occurs: reaching EOF or Garbage
+           * Collection
+           */
+          private boolean closed = false;
+          private int position = 0;
+
+          /**
+           * Check if we should auto-close this stream
+           */
+          private void checkShouldClose(int readResult) throws IOException {
+            if (readResult == -1) {
+              close();
+            } else {
+              position += readResult;
+              if (position >= length) {
+                close();
+              }
+            }
+          }
+
+          public int read(byte[] b) throws IOException {
+            if (closed) {
+              return -1;
+            }
+            int result = super.read(b);
+            checkShouldClose(result);
+            return result;
+          }
+
+          public int read(byte[] b, int off, int len) throws IOException {
+            if (closed) {
+              return -1;
+            }
+            int result = super.read(b, off, len);
+            checkShouldClose(result);
+            return result;
+          }
+
+          public void close() throws IOException {
+            if (!closed) {
+              super.close();
+              tempFile.delete();
+              closed = true;
+            }
+          }
+
+          protected void finalize() throws IOException {
+            // forcibly close it because super.finalize() may keep the FD open, which may prevent
+            // file deletion
+            close();
+            // javac 13 assumes it can throw Throwable
+            try {
+              super.finalize();
+            } catch (RuntimeException e) {
+              throw e;
+            } catch (Error e) {
+              throw e;
+            } catch (IOException e) {
+              throw e;
+            } catch (Throwable e) {
+              throw new RuntimeException("Unexpected exception from finalize", e);
+            }
+          }
+        };
+      } else {
+        this.rawData = rawData;
+        this.stream = null;
+        this.offset = 0;
+        this.length = rawData.length;
+      }
+    } catch (IOException e) {
+      throw new PSQLException(GT.tr("An I/O error occurred while sending to the backend."),
+          PSQLState.IO_ERROR, e);
+    }
+  }
+
+  public InputStream getStream() {
+    if (stream != null) {
+      return stream;
+    }
+
+    return new java.io.ByteArrayInputStream(castNonNull(rawData), offset, length);
+  }
+
+  public int getLength() {
+    return length;
+  }
+
+  public int getOffset() {
+    return offset;
+  }
+
+  public byte /* @Nullable */ [] getBytes() {
+    return rawData;
+  }
+
+  public String toString() {
+    return "<stream of " + length + " bytes>";
+  }
+
+  private static int copyStream(InputStream inputStream, OutputStream outputStream, int limit)
+      throws IOException {
+    int totalLength = 0;
+    byte[] buffer = new byte[2048];
+    int readLength = inputStream.read(buffer);
+    while (readLength > 0) {
+      totalLength += readLength;
+      outputStream.write(buffer, 0, readLength);
+      if (totalLength >= limit) {
+        return -1;
+      }
+      readLength = inputStream.read(buffer);
+    }
+    return totalLength;
+  }
+
+  private final /* @Nullable */ InputStream stream;
+  private final byte /* @Nullable */ [] rawData;
+  private final int offset;
+  private final int length;
+}

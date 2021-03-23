@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Implementation-Title: PostgreSQL JDBC Driver
+Bundle-License: BSD-2-Clause
+Automatic-Module-Name: org.postgresql.jdbc
+Implementation-Version: 42.3.0-SNAPSHOT
+Specification-Vendor: Oracle Corporation
+Specification-Title: JDBC
+Implementation-Vendor-Id: org.postgresql
+Specification-Version: 4.2
+Implementation-Vendor: PostgreSQL Global Development Group
+Main-Class: org.postgresql.util.PGJDBCMain
+
