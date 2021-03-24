@@ -360,8 +360,6 @@ public abstract class FailoverIntegrationTest {
     try (ResultSet rs = stmt.executeQuery("select inet_server_addr()")) {
       if (rs.next()) {
         String instance = ipToInstanceMap.get(rs.getString(1));
-        stmt.close();
-        rs.close();
         return instance;
       }
     }
