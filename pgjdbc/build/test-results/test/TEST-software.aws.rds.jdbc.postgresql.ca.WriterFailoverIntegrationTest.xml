@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="software.aws.rds.jdbc.postgresql.ca.WriterFailoverIntegrationTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2021-03-17T00:00:14" hostname="Sertays-MBP.hitronhub.home" time="310.823">
+  <properties/>
+  <testcase name="test5_1_takeOverConnectionProperties()" classname="software.aws.rds.jdbc.postgresql.ca.WriterFailoverIntegrationTest" time="310.823">
+    <failure message="java.util.concurrent.TimeoutException: test5_1_takeOverConnectionProperties() timed out after 5 minutes" type="java.util.concurrent.TimeoutException">java.util.concurrent.TimeoutException: test5_1_takeOverConnectionProperties() timed out after 5 minutes
+	at org.junit.jupiter.engine.extension.TimeoutInvocation.createTimeoutException(TimeoutInvocation.java:70)
+	at org.junit.jupiter.engine.extension.TimeoutInvocation.proceed(TimeoutInvocation.java:59)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:149)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:140)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:84)
+	at org.junit.jupiter.engine.execution.ExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(ExecutableInvoker.java:115)
+	at org.junit.jupiter.engine.execution.ExecutableInvoker.lambda$invoke$0(ExecutableInvoker.java:105)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.ExecutableInvoker.invoke(ExecutableInvoker.java:104)
+	at org.junit.jupiter.engine.execution.ExecutableInvoker.invoke(ExecutableInvoker.java:98)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$6(TestMethodTestDescriptor.java:205)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:201)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:137)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:71)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$5(NodeTestTask.java:135)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$7(NodeTestTask.java:125)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:135)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:123)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:122)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:80)
+	at org.junit.platform.engine.support.hierarchical.ForkJoinPoolHierarchicalTestExecutorService$ExclusiveTask.compute(ForkJoinPoolHierarchicalTestExecutorService.java:171)
+	at org.junit.platform.engine.support.hierarchical.ForkJoinPoolHierarchicalTestExecutorService.invokeAll(ForkJoinPoolHierarchicalTestExecutorService.java:115)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$5(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$7(NodeTestTask.java:125)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:135)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:123)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:122)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:80)
+	at org.junit.platform.engine.support.hierarchical.ForkJoinPoolHierarchicalTestExecutorService$ExclusiveTask.compute(ForkJoinPoolHierarchicalTestExecutorService.java:171)
+	at org.junit.platform.engine.support.hierarchical.ForkJoinPoolHierarchicalTestExecutorService.invokeAll(ForkJoinPoolHierarchicalTestExecutorService.java:115)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$5(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$7(NodeTestTask.java:125)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:135)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:123)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:122)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:80)
+	at org.junit.platform.engine.support.hierarchical.ForkJoinPoolHierarchicalTestExecutorService$ExclusiveTask.compute(ForkJoinPoolHierarchicalTestExecutorService.java:171)
+	at java.util.concurrent.RecursiveAction.exec(RecursiveAction.java:189)
+	at java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:289)
+	at java.util.concurrent.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1056)
+	at java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1692)
+	at java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:175)
+	Suppressed: java.lang.InterruptedException: sleep interrupted
+		at java.lang.Thread.sleep(Native Method)
+		at software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest.waitUntilWriterInstanceChanged(FailoverIntegrationTest.java:281)
+		at software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest.failoverClusterAndWaitUntilWriterChanged(FailoverIntegrationTest.java:231)
+		at software.aws.rds.jdbc.postgresql.ca.WriterFailoverIntegrationTest.test5_1_takeOverConnectionProperties(WriterFailoverIntegrationTest.java:262)
+		at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+		at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+		at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+		at java.lang.reflect.Method.invoke(Method.java:498)
+		at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:686)
+		at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+		at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+		at org.junit.jupiter.engine.extension.TimeoutInvocation.proceed(TimeoutInvocation.java:46)
+		... 50 more
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+Mar 16, 2021 5:00:07 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest initiateInstanceNames
+INFO: Initiating db instance names.
+Mar 16, 2021 5:00:08 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest$CrashInstanceRunnable <init>
+INFO: create runnable for sertay-aurora-postgres-1
+Mar 16, 2021 5:00:08 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest$CrashInstanceRunnable <init>
+INFO: create runnable for sertay-aurora-postgres-3
+Mar 16, 2021 5:00:08 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest$CrashInstanceRunnable <init>
+INFO: create runnable for sertay-aurora-postgres-5
+Mar 16, 2021 5:00:08 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest$CrashInstanceRunnable <init>
+INFO: create runnable for sertay-aurora-postgres-4
+Mar 16, 2021 5:00:08 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest$CrashInstanceRunnable <init>
+INFO: create runnable for sertay-aurora-postgres-2
+Mar 16, 2021 5:00:14 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest <init>
+INFO: {172.31.19.114=sertay-aurora-postgres-3, 172.31.6.0=sertay-aurora-postgres-1, 172.31.9.253=sertay-aurora-postgres-5, 172.31.42.240=sertay-aurora-postgres-2, 172.31.14.29=sertay-aurora-postgres-4}
+Mar 16, 2021 5:00:14 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest resetCluster
+INFO: Resetting cluster.
+Mar 16, 2021 5:00:14 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilFirstInstanceIsWriter
+INFO: Failover cluster to Instance 1.
+Mar 16, 2021 5:00:14 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest failoverClusterWithATargetInstance
+INFO: Failover cluster to sertay-aurora-postgres-1
+Mar 16, 2021 5:00:14 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilClusterHasRightState
+INFO: Wait until cluster is in available state.
+Mar 16, 2021 5:00:14 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilClusterHasRightState
+INFO: Cluster is available.
+Mar 16, 2021 5:00:14 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest failoverClusterWithATargetInstance
+INFO: Cluster failover request successful.
+Mar 16, 2021 5:00:14 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilFirstInstanceIsWriter
+INFO: Wait until Instance 1 becomes the writer.
+Mar 16, 2021 5:00:14 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: Wait until sertay-aurora-postgres-1 is up.
+Mar 16, 2021 5:00:15 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: sertay-aurora-postgres-1 is up.
+Mar 16, 2021 5:00:15 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: Wait until sertay-aurora-postgres-3 is up.
+Mar 16, 2021 5:00:16 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: sertay-aurora-postgres-3 is up.
+Mar 16, 2021 5:00:16 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: Wait until sertay-aurora-postgres-5 is up.
+Mar 16, 2021 5:00:16 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: sertay-aurora-postgres-5 is up.
+Mar 16, 2021 5:00:16 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: Wait until sertay-aurora-postgres-4 is up.
+Mar 16, 2021 5:00:17 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: sertay-aurora-postgres-4 is up.
+Mar 16, 2021 5:00:17 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: Wait until sertay-aurora-postgres-2 is up.
+Mar 16, 2021 5:00:18 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: sertay-aurora-postgres-2 is up.
+Mar 16, 2021 5:00:20 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilClusterHasRightState
+INFO: Wait until cluster is in available state.
+Mar 16, 2021 5:00:20 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilClusterHasRightState
+INFO: Cluster is available.
+Mar 16, 2021 5:00:20 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilWriterInstanceChanged
+INFO: Wait until the writer is not sertay-aurora-postgres-1 anymore.
+Mar 16, 2021 5:05:18 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest reviveAllInstances
+INFO: Revive all crashed instances in the test and wait until they are up.
+Mar 16, 2021 5:05:18 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest stopCrashingInstanceAndWaitUntilUp
+INFO: Stop crashing sertay-aurora-postgres-4.
+Mar 16, 2021 5:05:18 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: Wait until sertay-aurora-postgres-4 is up.
+Mar 16, 2021 5:05:19 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: sertay-aurora-postgres-4 is up.
+Mar 16, 2021 5:05:19 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest stopCrashingInstanceAndWaitUntilUp
+INFO: Stop crashing sertay-aurora-postgres-5.
+Mar 16, 2021 5:05:19 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: Wait until sertay-aurora-postgres-5 is up.
+Mar 16, 2021 5:05:20 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: sertay-aurora-postgres-5 is up.
+Mar 16, 2021 5:05:20 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest stopCrashingInstanceAndWaitUntilUp
+INFO: Stop crashing sertay-aurora-postgres-1.
+Mar 16, 2021 5:05:20 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: Wait until sertay-aurora-postgres-1 is up.
+Mar 16, 2021 5:05:21 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: sertay-aurora-postgres-1 is up.
+Mar 16, 2021 5:05:21 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest stopCrashingInstanceAndWaitUntilUp
+INFO: Stop crashing sertay-aurora-postgres-2.
+Mar 16, 2021 5:05:21 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: Wait until sertay-aurora-postgres-2 is up.
+Mar 16, 2021 5:05:21 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: sertay-aurora-postgres-2 is up.
+Mar 16, 2021 5:05:21 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest stopCrashingInstanceAndWaitUntilUp
+INFO: Stop crashing sertay-aurora-postgres-3.
+Mar 16, 2021 5:05:21 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: Wait until sertay-aurora-postgres-3 is up.
+Mar 16, 2021 5:05:23 PM software.aws.rds.jdbc.postgresql.ca.FailoverIntegrationTest waitUntilInstanceIsUp
+INFO: sertay-aurora-postgres-3 is up.
+]]></system-err>
+</testsuite>

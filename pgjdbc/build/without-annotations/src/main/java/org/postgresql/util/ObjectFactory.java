@@ -1,0 +1,64 @@
+/*
+ * Copyright (c) 2004, PostgreSQL Global Development Group
+ * See the LICENSE file in the project root for more information.
+ */
+
+package org.postgresql.util;
+
+// import org.checkerframework.checker.nullness.qual.Nullable;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Properties;
+
+/**
+ * Helper class to instantiate objects. Note: the class is <b>NOT</b> public API, so it is subject
+ * to change.
+ */
+public class ObjectFactory {
+
+  /**
+   * Instantiates a class using the appropriate constructor. If a constructor with a single
+   * Propertiesparameter exists, it is used. Otherwise, if tryString is true a constructor with a
+   * single String argument is searched if it fails, or tryString is true a no argument constructor
+   * is tried.
+   *
+   * @param classname name of the class to instantiate
+   * @param info parameter to pass as Properties
+   * @param tryString whether to look for a single String argument constructor
+   * @param stringarg parameter to pass as String
+   * @return the instantiated class
+   * @throws ClassNotFoundException if something goes wrong
+   * @throws SecurityException if something goes wrong
+   * @throws NoSuchMethodException if something goes wrong
+   * @throws IllegalArgumentException if something goes wrong
+   * @throws InstantiationException if something goes wrong
+   * @throws IllegalAccessException if something goes wrong
+   * @throws InvocationTargetException if something goes wrong
+   */
+  public static Object instantiate(String classname, Properties info, boolean tryString,
+      /* @Nullable */ String stringarg)
+      throws ClassNotFoundException, SecurityException, NoSuchMethodException,
+          IllegalArgumentException, InstantiationException, IllegalAccessException,
+          InvocationTargetException {
+    /* @Nullable */ Object[] args = {info};
+    Constructor<?> ctor = null;
+    Class<?> cls = Class.forName(classname);
+    try {
+      ctor = cls.getConstructor(Properties.class);
+    } catch (NoSuchMethodException ignored) {
+    }
+    if (tryString && ctor == null) {
+      try {
+        ctor = cls.getConstructor(String.class);
+        args = new String[]{stringarg};
+      } catch (NoSuchMethodException ignored) {
+      }
+    }
+    if (ctor == null) {
+      ctor = cls.getConstructor();
+      args = new Object[0];
+    }
+    return ctor.newInstance(args);
+  }
+}
