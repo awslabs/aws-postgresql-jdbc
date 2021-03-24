@@ -1,7 +1,0 @@
-Manifest-Version: 1.0
-Implementation-Title: PostgreSQL JDBC Driver
-Bundle-License: BSD-2-Clause
-Implementation-Version: 42.3.0-SNAPSHOT
-Implementation-Vendor-Id: org.postgresql
-Implementation-Vendor: PostgreSQL Global Development Group
-
