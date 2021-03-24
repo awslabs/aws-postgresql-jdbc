@@ -351,14 +351,17 @@ public abstract class FailoverIntegrationTest {
   }
 
   protected String queryInstanceId(Connection connection) throws SQLException {
+    try (Statement myStmt = connection.createStatement()) {
+      return executeInstanceIdQuery(myStmt);
+    }
+  }
 
-    try (Statement myStmt = connection.createStatement();
-        ResultSet resultSet = myStmt.executeQuery("select inet_server_addr()")
-    ) {
-      if (resultSet.next()) {
-        String instance = ipToInstanceMap.get(resultSet.getString(1));
-        myStmt.close();
-        resultSet.close();
+  protected String executeInstanceIdQuery(Statement stmt) throws SQLException {
+    try (ResultSet rs = stmt.executeQuery("select inet_server_addr()")) {
+      if (rs.next()) {
+        String instance = ipToInstanceMap.get(rs.getString(1));
+        stmt.close();
+        rs.close();
         return instance;
       }
     }
@@ -384,6 +387,14 @@ public abstract class FailoverIntegrationTest {
         "Assert that the first read query throws, "
             + "this should kick off the driver failover process..");
     SQLException exception = assertThrows(SQLException.class, () -> queryInstanceId(connection));
+    assertEquals(expectedSQLErrorCode, exception.getSQLState());
+  }
+
+  protected void assertFirstQueryThrows(Statement stmt, String expectedSQLErrorCode) {
+    logger.log(Level.INFO,
+            "Assert that the first read query throws, "
+                    + "this should kick off the driver failover process..");
+    SQLException exception = assertThrows(SQLException.class, () -> executeInstanceIdQuery(stmt));
     assertEquals(expectedSQLErrorCode, exception.getSQLState());
   }
 
