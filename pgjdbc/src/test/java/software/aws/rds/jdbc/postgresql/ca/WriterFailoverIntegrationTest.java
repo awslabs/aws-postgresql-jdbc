@@ -42,6 +42,7 @@ public class WriterFailoverIntegrationTest extends FailoverIntegrationTest {
     // Crash Instance1 and nominate a new writer
     failoverClusterAndWaitUntilWriterChanged(initalWriterId);
 
+    // Failure occurs on Connection invocation
     assertFirstQueryThrows(testConnection, "08S02");
 
     // Assert that we are connected to the new writer after failover happens.
@@ -61,11 +62,13 @@ public class WriterFailoverIntegrationTest extends FailoverIntegrationTest {
     final String initalWriterId = instanceID1;
 
     testConnection = connectToWriterInstance(initalWriterId);
+    Statement stmt = testConnection.createStatement();
 
     // Crash Instance1 and nominate a new writer
     failoverClusterAndWaitUntilWriterChanged(initalWriterId);
 
-    assertFirstQueryThrows(testConnection, "08S02");
+    // Failure occurs on Statement invocation
+    assertFirstQueryThrows(stmt, "08S02");
 
     // Assert that the driver is connected to the new writer after failover happens.
     final String currentConnectionId = queryInstanceId(testConnection);
