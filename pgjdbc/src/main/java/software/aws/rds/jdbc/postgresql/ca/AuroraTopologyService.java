@@ -69,7 +69,7 @@ public class AuroraTopologyService implements TopologyService {
   public AuroraTopologyService(int refreshRateInMilliseconds) {
     this.refreshRateInMilliseconds = refreshRateInMilliseconds;
     this.clusterId = UUID.randomUUID().toString();
-    this.clusterInstanceTemplate = new HostInfo("", "", HostInfo.NO_PORT, false);
+    this.clusterInstanceTemplate = new HostInfo("?", "?", HostInfo.NO_PORT, false);
   }
 
   /**
@@ -193,21 +193,25 @@ public class AuroraTopologyService implements TopologyService {
         while (resultSet.next()) {
           if (WRITER_SESSION_ID.equalsIgnoreCase(resultSet.getString(SESSION_ID_COL))) {
             if (writerCount == 0) {
-              // store the first writer to its expected position [0]
-              hosts.add(i, hosts.get(WRITER_CONNECTION_INDEX));
-              hosts.set(
-                  WRITER_CONNECTION_INDEX, createHost(resultSet));
+              // Add the writer to the list of host and swap it with a reader connection that is occupying the writer index
+              if (i > WRITER_CONNECTION_INDEX) {
+                hosts.add(i, hosts.get(WRITER_CONNECTION_INDEX));
+                hosts.set(
+                        WRITER_CONNECTION_INDEX, createHost(resultSet));
+              }
+              else {
+                hosts.add(i, createHost(resultSet));
+              }
             } else {
               // during failover, there could temporarily be two writers. Because we sorted by the last
               // updated timestamp, this host should be the obsolete writer, and it is about to become a reader
               hosts.add(i, createHost(resultSet, false));
             }
-            i++;
             writerCount++;
           } else {
             hosts.add(i, createHost(resultSet));
-            i++;
           }
+          i++;
         }
 
       }
