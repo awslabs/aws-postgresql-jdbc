@@ -879,11 +879,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
     this.inTransaction = this.currentConnection.getQueryExecutor().getTransactionState() != TransactionState.IDLE;
     if (this.inTransaction) {
       try {
-        if (this.currentConnection == null) {
-          // eat
-        } else {
-          this.currentConnection.rollback();
-        }
+        this.currentConnection.rollback();
       } catch (SQLException e) {
         // eat
       }
