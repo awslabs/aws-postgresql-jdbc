@@ -14,13 +14,13 @@ environment:
     PlatformToolset: v120
 matrix:
   allow_failures:
-    - pg: master
+    - pg: main
   exclude:
     - platform: x86
       pg: 11.1-1
       PlatformToolset: v140
     - platform: x86
-      pg: master
+      pg: main
 
 init:
 - set pf=%ProgramFiles%&& set x64=-x64
