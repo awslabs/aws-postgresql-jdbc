@@ -202,7 +202,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
 
   @EnsuresNonNull({"this.topologyService", "this.connectionProvider", "this.writerFailoverHandler", "this.readerFailoverHandler", "this.initialConnectionProps"})
   @RequiresNonNull({"this.metrics"})
-  synchronized private void initProxyFields(@UnderInitialization ClusterAwareConnectionProxy this,  HostSpec hostSpec, Properties props, String url) {
+  private synchronized void initProxyFields(@UnderInitialization ClusterAwareConnectionProxy this,  HostSpec hostSpec, Properties props, String url) {
 
     this.initialConnectionProps = (Properties)props.clone();
     PGProperty.CONNECT_TIMEOUT.set(this.initialConnectionProps, this.failoverConnectTimeout);
@@ -231,7 +231,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   @EnsuresNonNull({"this.topologyService", "this.connectionProvider", "this.writerFailoverHandler", "this.readerFailoverHandler", "this.initialConnectionProps"})
-  synchronized private void initProxyFields(@UnderInitialization ClusterAwareConnectionProxy this, Properties props, ConnectionProvider connectionProvider, TopologyService service, WriterFailoverHandler writerFailoverHandler, ReaderFailoverHandler readerFailoverHandler) {
+  private synchronized void initProxyFields(@UnderInitialization ClusterAwareConnectionProxy this, Properties props, ConnectionProvider connectionProvider, TopologyService service, WriterFailoverHandler writerFailoverHandler, ReaderFailoverHandler readerFailoverHandler) {
 
     this.initialConnectionProps = (Properties)props.clone();
     PGProperty.CONNECT_TIMEOUT.set(this.initialConnectionProps, this.failoverConnectTimeout);
@@ -304,7 +304,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    *
    * @return true if proxy is connected to cluster through RDS proxy
    */
-  synchronized public boolean isRdsProxy() {
+  public synchronized boolean isRdsProxy() {
     return this.isRdsProxy;
   }
 
@@ -313,7 +313,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    *
    * @return true if cluster-aware failover is enabled
    */
-  synchronized public boolean isFailoverEnabled(@UnknownInitialization ClusterAwareConnectionProxy this) {
+  public synchronized boolean isFailoverEnabled(@UnknownInitialization ClusterAwareConnectionProxy this) {
     return this.enableFailoverSetting
         && !this.isRdsProxy
         && this.isClusterTopologyAvailable;
@@ -328,7 +328,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    * @throws SQLException if an error occurs
    */
   @RequiresNonNull({"this.topologyService", "this.connectionProvider", "this.writerFailoverHandler", "this.readerFailoverHandler", "this.initialConnectionProps", "this.metrics", "this.hosts"})
-  synchronized private void initProxy(@UnderInitialization ClusterAwareConnectionProxy this, HostSpec hostSpec, Properties props, String url) throws SQLException {
+  private synchronized void initProxy(@UnderInitialization ClusterAwareConnectionProxy this, HostSpec hostSpec, Properties props, String url) throws SQLException {
     if (!this.enableFailoverSetting) {
       // Use a standard default connection - no further initialization required
       this.currentConnection = this.connectionProvider.connect(hostSpec, props, url);
@@ -935,7 +935,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    * @throws Throwable The original cause of the exception will be thrown when available, otherwise the exception itself will be thrown
    */
   @RequiresNonNull({"this.metrics"})
-  synchronized private void dealWithOriginalException(@Nullable Throwable originalException, Exception wrapperException) throws Throwable {
+  private synchronized void dealWithOriginalException(@Nullable Throwable originalException, Exception wrapperException) throws Throwable {
     if (originalException != null) {
       LOGGER.log(Level.WARNING, "[ClusterAwareConnectionProxy] Detected an exception while executing a command: {0}", originalException.getMessage());
       LOGGER.log(Level.FINER, Util.stackTraceToString(originalException, this.getClass()));
