@@ -198,8 +198,7 @@ public class AuroraTopologyService implements TopologyService {
                 hosts.add(i, hosts.get(WRITER_CONNECTION_INDEX));
                 hosts.set(
                         WRITER_CONNECTION_INDEX, createHost(resultSet));
-              }
-              else {
+              } else {
                 hosts.add(i, createHost(resultSet));
               }
             } else {
