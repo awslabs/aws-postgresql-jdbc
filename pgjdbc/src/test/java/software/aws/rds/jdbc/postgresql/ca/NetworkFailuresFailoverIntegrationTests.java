@@ -47,6 +47,7 @@ public class NetworkFailuresFailoverIntegrationTests extends FailoverIntegration
       + ":" + pgAuroraPort + "/" + pgAuroraTestDb ;
 
   public NetworkFailuresFailoverIntegrationTests() throws SQLException {
+    super();
   }
 
   /**
@@ -147,7 +148,7 @@ public class NetworkFailuresFailoverIntegrationTests extends FailoverIntegration
     String currentReader = queryInstanceId(testConnection);
     logger.log(Level.INFO, "Current reader: " + currentReader);
 
-    final String[] allInstances = {instanceID1, instanceID2, instanceID3, instanceID4, instanceID5};
+    final String[] allInstances = instanceIDs;
     // put down all hosts except a writer
     FailoverSocketFactory.downHost(dbHostClusterRo);
     for (String host : allInstances) {
@@ -188,7 +189,7 @@ public class NetworkFailuresFailoverIntegrationTests extends FailoverIntegration
     logger.log(Level.INFO, "Current writer: " + currentWriter);
     checkWriterConnection.close();
 
-    final String[] allInstances = {instanceID1, instanceID2, instanceID3, instanceID4, instanceID5};
+    final String[] allInstances = instanceIDs;
     ArrayList<String> readers = new ArrayList<String>(Arrays.asList(allInstances));
     readers.remove(currentWriter);
     Collections.shuffle(readers);
@@ -243,7 +244,7 @@ public class NetworkFailuresFailoverIntegrationTests extends FailoverIntegration
     logger.log(Level.INFO, "Current writer: " + currentWriter);
     checkWriterConnection.close();
 
-    final String[] allInstances = {instanceID1, instanceID2, instanceID3, instanceID4, instanceID5};
+    final String[] allInstances = instanceIDs;
     ArrayList<String> readers = new ArrayList<String>(Arrays.asList(allInstances));
     readers.remove(currentWriter);
     Collections.shuffle(readers);

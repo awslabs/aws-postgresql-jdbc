@@ -15,8 +15,12 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import org.postgresql.PGProperty;
+
 import java.sql.SQLException;
-import java.util.List;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 @Disabled
@@ -24,42 +28,61 @@ import java.util.concurrent.TimeUnit;
 public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
 
   public ReaderFailoverIntegrationTest() throws SQLException {
+    super();
   }
 
   /** Current reader dies, the driver failover to another reader. */
   @Test
   public void test2_1_failFromReaderToAnotherReader() throws SQLException, InterruptedException {
-    testConnection = connectToReaderInstance(instanceID2);
+    assertTrue(CLUSTER_SIZE >= 3, "Minimal cluster configuration: 1 writer + 2 readers");
 
-    startCrashingInstanceAndWaitUntilDown(instanceID2);
+    Properties props = new Properties();
+    props.setProperty(PGProperty.USER.getName(), pgAuroraUsername);
+    props.setProperty(PGProperty.PASSWORD.getName(), pgAuroraPassword);
+    props.setProperty(PGProperty.SOCKET_FACTORY.getName(), software.aws.rds.jdbc.postgresql.ca.FailoverSocketFactory.class.getName());
+    props.setProperty(PGProperty.SOCKET_TIMEOUT.getName(), SOCKET_TIMEOUT_VAL);
+    props.setProperty(PGProperty.CONNECT_TIMEOUT.getName(), CONNECT_TIMEOUT_VAL);
+    testConnection = connectToReaderInstance(instanceIDs[1], props);
+
+    FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, instanceIDs[1]));
 
     assertFirstQueryThrows(testConnection, "08S02");
 
     // Assert that we are now connected to a new reader instance.
     final String currentConnectionId = queryInstanceId(testConnection);
     assertTrue(isDBInstanceReader(currentConnectionId));
-    assertNotEquals(currentConnectionId, instanceID2);
+    assertNotEquals(currentConnectionId, instanceIDs[1]);
   }
 
   /** Current reader dies, other known reader instances do not respond, failover to writer. */
   @Test
   public void test2_2_failFromReaderToWriterWhenAllReadersAreDown()
       throws SQLException, InterruptedException {
-    testConnection = connectToReaderInstance(instanceID2);
+    assertTrue(CLUSTER_SIZE >= 2, "Minimal cluster configuration: 1 writer + 1 reader");
 
-    // Fist kill instances 3-5.
-    startCrashingInstanceAndWaitUntilDown(instanceID3);
-    startCrashingInstanceAndWaitUntilDown(instanceID4);
-    startCrashingInstanceAndWaitUntilDown(instanceID5);
+    Properties props = new Properties();
+    props.setProperty(PGProperty.USER.getName(), pgAuroraUsername);
+    props.setProperty(PGProperty.PASSWORD.getName(), pgAuroraPassword);
+    props.setProperty(PGProperty.SOCKET_FACTORY.getName(), software.aws.rds.jdbc.postgresql.ca.FailoverSocketFactory.class.getName());
+    props.setProperty(PGProperty.SOCKET_TIMEOUT.getName(), SOCKET_TIMEOUT_VAL);
+    props.setProperty(PGProperty.CONNECT_TIMEOUT.getName(), CONNECT_TIMEOUT_VAL);
+    testConnection = connectToReaderInstance(instanceIDs[1], props);
 
-    // Then kill instance 2.
-    startCrashingInstanceAndWaitUntilDown(instanceID2);
+    // Fist kill instances other than writer and connected reader
+    for(int i = 2; i < instanceIDs.length; i++) {
+      FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, instanceIDs[i]));
+    }
+
+    TimeUnit.SECONDS.sleep(3);
+
+    // Then kill connected reader.
+    FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, instanceIDs[1]));
 
     assertFirstQueryThrows(testConnection, "08S02");
 
     // Assert that the driver failed over to the writer instance (Instance1).
     final String currentConnectionId = queryInstanceId(testConnection);
-    assertEquals(instanceID1, currentConnectionId);
+    assertEquals(instanceIDs[0], currentConnectionId);
     assertTrue(isDBInstanceWriter(currentConnectionId));
   }
 
@@ -70,11 +93,20 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
   @Test
   public void test2_3_failFromReaderToReaderWithSomeReadersAreDown()
       throws SQLException, InterruptedException {
-    testConnection = connectToReaderInstance(instanceID2);
+    assertTrue(CLUSTER_SIZE >= 3, "Minimal cluster configuration: 1 writer + 2 readers");
 
-    startCrashingInstanceAndWaitUntilDown(instanceID3);
-    startCrashingInstanceAndWaitUntilDown(instanceID4);
-    startCrashingInstanceAndWaitUntilDown(instanceID2);
+    Properties props = new Properties();
+    props.setProperty(PGProperty.USER.getName(), pgAuroraUsername);
+    props.setProperty(PGProperty.PASSWORD.getName(), pgAuroraPassword);
+    props.setProperty(PGProperty.SOCKET_FACTORY.getName(), software.aws.rds.jdbc.postgresql.ca.FailoverSocketFactory.class.getName());
+    props.setProperty(PGProperty.SOCKET_TIMEOUT.getName(), SOCKET_TIMEOUT_VAL);
+    props.setProperty(PGProperty.CONNECT_TIMEOUT.getName(), CONNECT_TIMEOUT_VAL);
+    testConnection = connectToReaderInstance(instanceIDs[1], props);
+
+    // Fist kill all reader instances except one
+    for(int i = 1; i < instanceIDs.length-1; i++) {
+      FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, instanceIDs[i]));
+    }
 
     TimeUnit.SECONDS.sleep(2);
     assertFirstQueryThrows(testConnection, "08S02");
@@ -83,7 +115,7 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
     // instance (Instance1).
     final String currentConnectionId = queryInstanceId(testConnection);
     assertTrue(
-        currentConnectionId.equals(instanceID5) || currentConnectionId.equals(instanceID1));
+        currentConnectionId.equals(instanceIDs[instanceIDs.length - 1]) || currentConnectionId.equals(instanceIDs[0]));
   }
 
   /**
@@ -93,13 +125,21 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
   @Test
   public void test2_4_failoverBackToThePreviouslyDownReader()
       throws SQLException, InterruptedException {
-    final String firstReaderInstanceId = instanceID2;
+    assertTrue(CLUSTER_SIZE >= 5, "Minimal cluster configuration: 1 writer + 4 readers");
+
+    final String firstReaderInstanceId = instanceIDs[1];
 
     // Connect to reader (Instance2).
-    testConnection = connectToReaderInstance(firstReaderInstanceId);
+    Properties props = new Properties();
+    props.setProperty(PGProperty.USER.getName(), pgAuroraUsername);
+    props.setProperty(PGProperty.PASSWORD.getName(), pgAuroraPassword);
+    props.setProperty(PGProperty.SOCKET_FACTORY.getName(), software.aws.rds.jdbc.postgresql.ca.FailoverSocketFactory.class.getName());
+    props.setProperty(PGProperty.SOCKET_TIMEOUT.getName(), SOCKET_TIMEOUT_VAL);
+    props.setProperty(PGProperty.CONNECT_TIMEOUT.getName(), CONNECT_TIMEOUT_VAL);
+    testConnection = connectToReaderInstance(firstReaderInstanceId, props);
 
     // Start crashing reader (Instance2).
-    startCrashingInstanceAndWaitUntilDown(firstReaderInstanceId);
+    FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, firstReaderInstanceId));
 
     assertFirstQueryThrows(testConnection, "08S02");
 
@@ -109,7 +149,7 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
     assertNotEquals(firstReaderInstanceId, secondReaderInstanceId);
 
     // Crash the second reader instance.
-    startCrashingInstanceAndWaitUntilDown(secondReaderInstanceId);
+    FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, secondReaderInstanceId));
 
     assertFirstQueryThrows(testConnection, "08S02");
 
@@ -120,29 +160,26 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
     assertNotEquals(secondReaderInstanceId, thirdReaderInstanceId);
 
     // Grab the id of the fourth reader instance.
-    final List<String> readerInstanceIds = getDBClusterReaderInstanceIds();
-    readerInstanceIds.remove(instanceID1);
-    readerInstanceIds.remove(instanceID2);
+    final HashSet<String> readerInstanceIds = new HashSet<String>(Arrays.asList(instanceIDs)); // getDBClusterReaderInstanceIds();
+    readerInstanceIds.remove(instanceIDs[0]);
+    readerInstanceIds.remove(firstReaderInstanceId);
     readerInstanceIds.remove(secondReaderInstanceId);
     readerInstanceIds.remove(thirdReaderInstanceId);
 
-    final String fourthInstanceId = readerInstanceIds.get(0);
+    final String fourthInstanceId = readerInstanceIds.stream().findFirst().get();
 
     // Crash the fourth reader instance.
-    startCrashingInstanceAndWaitUntilDown(fourthInstanceId);
+    FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, fourthInstanceId));
 
     // Stop crashing the first and second.
-    stopCrashingInstanceAndWaitUntilUp(firstReaderInstanceId);
-    stopCrashingInstanceAndWaitUntilUp(secondReaderInstanceId);
-
-    // Sleep 30+ seconds to force cache update upon successful query.
-    Thread.sleep(31000);
+    FailoverSocketFactory.upHost(String.format(pgHostInstancePattern, firstReaderInstanceId));
+    FailoverSocketFactory.upHost(String.format(pgHostInstancePattern, secondReaderInstanceId));
 
     final String currentInstanceId = queryInstanceId(testConnection);
     assertEquals(thirdReaderInstanceId, currentInstanceId);
 
     // Start crashing the third instance.
-    startCrashingInstanceAndWaitUntilDown(thirdReaderInstanceId);
+    FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, thirdReaderInstanceId));
 
     assertFirstQueryThrows(testConnection, "08S02");
 
@@ -160,48 +197,64 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
   @Test
   public void test2_5_failFromReaderToWriterToAnyAvailableInstance()
       throws SQLException, InterruptedException {
-    // Crashing Instance3, Instance4 and Instance5
-    startCrashingInstanceAndWaitUntilDown(instanceID3);
-    startCrashingInstanceAndWaitUntilDown(instanceID4);
-    startCrashingInstanceAndWaitUntilDown(instanceID5);
+
+    assertTrue(CLUSTER_SIZE >= 3, "Minimal cluster configuration: 1 writer + 2 readers");
+
+    // Crashing all readers except the first one
+    for(int i = 2; i < instanceIDs.length; i++) {
+      FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, instanceIDs[i]));
+    }
 
     // Connect to Instance2 which is the only reader that is up.
-    testConnection = connectToReaderInstance(instanceID2);
+    Properties props = new Properties();
+    props.setProperty(PGProperty.USER.getName(), pgAuroraUsername);
+    props.setProperty(PGProperty.PASSWORD.getName(), pgAuroraPassword);
+    props.setProperty(PGProperty.SOCKET_FACTORY.getName(), software.aws.rds.jdbc.postgresql.ca.FailoverSocketFactory.class.getName());
+    props.setProperty(PGProperty.SOCKET_TIMEOUT.getName(), SOCKET_TIMEOUT_VAL);
+    props.setProperty(PGProperty.CONNECT_TIMEOUT.getName(), CONNECT_TIMEOUT_VAL);
+    testConnection = connectToReaderInstance(instanceIDs[1], props);
 
     // Crash Instance2
-    startCrashingInstanceAndWaitUntilDown(instanceID2);
+    FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, instanceIDs[1]));
 
     assertFirstQueryThrows(testConnection, "08S02");
 
     // Assert that we are currently connected to the writer Instance1.
     String currentConnectionId = queryInstanceId(testConnection);
-    assertEquals(instanceID1, currentConnectionId);
+    assertEquals(instanceIDs[0], currentConnectionId);
     assertTrue(isDBInstanceWriter(currentConnectionId));
 
     // Stop Crashing reader Instance2 and Instance3
-    stopCrashingInstanceAndWaitUntilUp(instanceID2);
-    stopCrashingInstanceAndWaitUntilUp(instanceID3);
+    FailoverSocketFactory.upHost(String.format(pgHostInstancePattern, instanceIDs[1]));
+    FailoverSocketFactory.upHost(String.format(pgHostInstancePattern, instanceIDs[2]));
 
     // Crash writer Instance1.
-    failoverClusterToATargetAndWaitUntilWriterChanged(instanceID1, instanceID3);
+    failoverClusterToATargetAndWaitUntilWriterChanged(instanceIDs[0], instanceIDs[2]);
 
     assertFirstQueryThrows(testConnection, "08S02");
 
     // Assert that we are connected to one of the available instances.
     currentConnectionId = queryInstanceId(testConnection);
     assertTrue(
-        instanceID2.equals(currentConnectionId) || instanceID3.equals(currentConnectionId));
+            instanceIDs[1].equals(currentConnectionId) || instanceIDs[2].equals(currentConnectionId));
   }
 
   /** Connect to a readonly cluster endpoint and ensure that we are doing a reader failover. */
   @Test
   public void test2_6_clusterEndpointReadOnlyFailover() throws SQLException, InterruptedException {
-    testConnection = createConnectionToReadonlyClusterEndpoint();
+    Properties props = new Properties();
+    props.setProperty(PGProperty.USER.getName(), pgAuroraUsername);
+    props.setProperty(PGProperty.PASSWORD.getName(), pgAuroraPassword);
+    props.setProperty(PGProperty.SOCKET_FACTORY.getName(), software.aws.rds.jdbc.postgresql.ca.FailoverSocketFactory.class.getName());
+    props.setProperty(PGProperty.SOCKET_TIMEOUT.getName(), SOCKET_TIMEOUT_VAL);
+    props.setProperty(PGProperty.CONNECT_TIMEOUT.getName(), CONNECT_TIMEOUT_VAL);
+    testConnection = createConnectionToReadonlyClusterEndpoint(props);
 
     final String initialConnectionId = queryInstanceId(testConnection);
     assertTrue(isDBInstanceReader(initialConnectionId));
 
-    startCrashingInstanceAndWaitUntilDown(initialConnectionId);
+    FailoverSocketFactory.downHost(pgAuroraClusterIdentifier + ".cluster-ro-" + pgAuroraInstanceDnsSuffix.substring(1));
+    FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, initialConnectionId));
 
     assertFirstQueryThrows(testConnection, "08S02");
 
