@@ -33,9 +33,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ExecutorService;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -74,7 +74,7 @@ public abstract class FailoverIntegrationTest {
 
   protected final String pgHostInstancePattern = "%s" + pgAuroraInstanceDnsSuffix;
 
-  protected int CLUSTER_SIZE = 0;
+  protected int clusterSize = 0;
   protected String[] instanceIDs; // index 0 is always writer!
   protected final HashSet<String> instancesToCrash = new HashSet<>();
   protected ExecutorService crashInstancesExecutorService;
@@ -101,13 +101,13 @@ public abstract class FailoverIntegrationTest {
     initiateInstanceNames();
 
     // initializing ipToStringMap by creating connections to each instances and fetching their IPs
-    for(String id : instanceIDs) {
+    for (String id : instanceIDs) {
       initiateIpMap(id);
     }
 
     StringBuilder sb = new StringBuilder();
     sb.append("Cluster Instance IP addresses: \n");
-    for(String ip : ipToInstanceMap.keySet()) {
+    for (String ip : ipToInstanceMap.keySet()) {
       sb.append(ip + " -> " + ipToInstanceMap.get(ip) + (instanceIDs[0].equals(ipToInstanceMap.get(ip)) ? " (WRITER)" : "") + "\n");
     }
     logger.log(Level.INFO, sb.toString());
@@ -163,8 +163,8 @@ public abstract class FailoverIntegrationTest {
     logger.log(Level.INFO, "Initiating db instance names.");
     List<DBClusterMember> dbClusterMembers = getDBClusterMemberList();
 
-    CLUSTER_SIZE = dbClusterMembers.size();
-    assertTrue(CLUSTER_SIZE >= 2); // many tests assume that cluster contains at least a writer and a reader
+    clusterSize = dbClusterMembers.size();
+    assertTrue(clusterSize >= 2); // many tests assume that cluster contains at least a writer and a reader
 
     instanceIDs = dbClusterMembers.stream()
         .sorted(Comparator.comparing((DBClusterMember x) -> !x.isClusterWriter())
@@ -506,8 +506,8 @@ public abstract class FailoverIntegrationTest {
     executorService.awaitTermination(120, TimeUnit.SECONDS);
 
     if (finalCheck) {
-      assertTrue(remainingInstances.isEmpty(), "The following instances are still down: \n" +
-              String.join("\n", remainingInstances));
+      assertTrue(remainingInstances.isEmpty(), "The following instances are still down: \n"
+              + String.join("\n", remainingInstances));
     }
 
     logger.log(Level.INFO,"The following instances are up: \n" + String.join("\n", instances));
@@ -541,8 +541,8 @@ public abstract class FailoverIntegrationTest {
     executorService.awaitTermination(120, TimeUnit.SECONDS);
 
     if (finalCheck) {
-      assertTrue(remainingInstances.isEmpty(), "The following instances are still up: \n" +
-              String.join("\n", remainingInstances));
+      assertTrue(remainingInstances.isEmpty(), "The following instances are still up: \n"
+              + String.join("\n", remainingInstances));
     }
 
     logger.log(Level.INFO,"The following instances are down: \n" + String.join("\n", instances));

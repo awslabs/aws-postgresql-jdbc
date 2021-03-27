@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-
 import org.postgresql.PGProperty;
 
 import java.sql.SQLException;
@@ -34,7 +33,7 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
   /** Current reader dies, the driver failover to another reader. */
   @Test
   public void test2_1_failFromReaderToAnotherReader() throws SQLException, InterruptedException {
-    assertTrue(CLUSTER_SIZE >= 3, "Minimal cluster configuration: 1 writer + 2 readers");
+    assertTrue(clusterSize >= 3, "Minimal cluster configuration: 1 writer + 2 readers");
 
     Properties props = new Properties();
     props.setProperty(PGProperty.USER.getName(), pgAuroraUsername);
@@ -58,7 +57,7 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
   @Test
   public void test2_2_failFromReaderToWriterWhenAllReadersAreDown()
       throws SQLException, InterruptedException {
-    assertTrue(CLUSTER_SIZE >= 2, "Minimal cluster configuration: 1 writer + 1 reader");
+    assertTrue(clusterSize >= 2, "Minimal cluster configuration: 1 writer + 1 reader");
 
     Properties props = new Properties();
     props.setProperty(PGProperty.USER.getName(), pgAuroraUsername);
@@ -69,7 +68,7 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
     testConnection = connectToReaderInstance(instanceIDs[1], props);
 
     // Fist kill instances other than writer and connected reader
-    for(int i = 2; i < instanceIDs.length; i++) {
+    for (int i = 2; i < instanceIDs.length; i++) {
       FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, instanceIDs[i]));
     }
 
@@ -93,7 +92,7 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
   @Test
   public void test2_3_failFromReaderToReaderWithSomeReadersAreDown()
       throws SQLException, InterruptedException {
-    assertTrue(CLUSTER_SIZE >= 3, "Minimal cluster configuration: 1 writer + 2 readers");
+    assertTrue(clusterSize >= 3, "Minimal cluster configuration: 1 writer + 2 readers");
 
     Properties props = new Properties();
     props.setProperty(PGProperty.USER.getName(), pgAuroraUsername);
@@ -104,7 +103,7 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
     testConnection = connectToReaderInstance(instanceIDs[1], props);
 
     // Fist kill all reader instances except one
-    for(int i = 1; i < instanceIDs.length-1; i++) {
+    for (int i = 1; i < instanceIDs.length - 1; i++) {
       FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, instanceIDs[i]));
     }
 
@@ -125,7 +124,7 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
   @Test
   public void test2_4_failoverBackToThePreviouslyDownReader()
       throws SQLException, InterruptedException {
-    assertTrue(CLUSTER_SIZE >= 5, "Minimal cluster configuration: 1 writer + 4 readers");
+    assertTrue(clusterSize >= 5, "Minimal cluster configuration: 1 writer + 4 readers");
 
     final String firstReaderInstanceId = instanceIDs[1];
 
@@ -198,10 +197,10 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
   public void test2_5_failFromReaderToWriterToAnyAvailableInstance()
       throws SQLException, InterruptedException {
 
-    assertTrue(CLUSTER_SIZE >= 3, "Minimal cluster configuration: 1 writer + 2 readers");
+    assertTrue(clusterSize >= 3, "Minimal cluster configuration: 1 writer + 2 readers");
 
     // Crashing all readers except the first one
-    for(int i = 2; i < instanceIDs.length; i++) {
+    for (int i = 2; i < instanceIDs.length; i++) {
       FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, instanceIDs[i]));
     }
 

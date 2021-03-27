@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-
 import org.postgresql.PGProperty;
 
 import java.sql.ResultSet;
@@ -94,13 +93,12 @@ public class WriterFailoverIntegrationTest extends FailoverIntegrationTest {
     testConnection = connectToWriterInstance(initalWriterId, props);
 
     // Crash all reader instances (2 - 5).
-    for(int i = 2; i < instanceIDs.length; i++) {
+    for (int i = 2; i < instanceIDs.length; i++) {
       FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, instanceIDs[i]));
     }
 
     // Crash the writer Instance1.
     FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, initalWriterId));
-
 
     // All instances should be down, assert exception thrown with SQLState code 08001
     // (SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE)
