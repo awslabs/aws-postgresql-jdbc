@@ -69,7 +69,7 @@ public class AuroraTopologyService implements TopologyService {
   public AuroraTopologyService(int refreshRateInMilliseconds) {
     this.refreshRateInMilliseconds = refreshRateInMilliseconds;
     this.clusterId = UUID.randomUUID().toString();
-    this.clusterInstanceTemplate = new HostInfo("?", "?", HostInfo.NO_PORT, false);
+    this.clusterInstanceTemplate = new HostInfo("?", null, HostInfo.NO_PORT, false);
   }
 
   /**
@@ -188,29 +188,26 @@ public class AuroraTopologyService implements TopologyService {
     int writerCount = 0;
     try (Statement stmt = conn.createStatement()) {
       try (ResultSet resultSet = stmt.executeQuery(RETRIEVE_TOPOLOGY_SQL)) {
+        hosts.add(new HostInfo("?", null, HostInfo.NO_PORT, false));
 
-        int i = 0;
+        int i = 1;
         while (resultSet.next()) {
           if (WRITER_SESSION_ID.equalsIgnoreCase(resultSet.getString(SESSION_ID_COL))) {
             if (writerCount == 0) {
-              // Add the writer to the list of host and swap it with a reader connection that is occupying the writer index
-              if (i > WRITER_CONNECTION_INDEX) {
-                hosts.add(i, hosts.get(WRITER_CONNECTION_INDEX));
-                hosts.set(
-                        WRITER_CONNECTION_INDEX, createHost(resultSet));
-              } else {
-                hosts.add(i, createHost(resultSet));
-              }
+              // store the first writer to its expected position [0]
+              hosts.set(
+                      WRITER_CONNECTION_INDEX, createHost(resultSet));
             } else {
               // during failover, there could temporarily be two writers. Because we sorted by the last
               // updated timestamp, this host should be the obsolete writer, and it is about to become a reader
               hosts.add(i, createHost(resultSet, false));
+              i++;
             }
             writerCount++;
           } else {
             hosts.add(i, createHost(resultSet));
+            i++;
           }
-          i++;
         }
 
       }
