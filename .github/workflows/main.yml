@@ -22,9 +22,9 @@ jobs:
         java-version: 8
     - uses: burrunan/gradle-cache-action@v1
       name: Verify code style
-      env:
-        S3_BUILD_CACHE_ACCESS_KEY_ID: ${{ secrets.S3_BUILD_CACHE_ACCESS_KEY_ID }}
-        S3_BUILD_CACHE_SECRET_KEY: ${{ secrets.S3_BUILD_CACHE_SECRET_KEY }}
+#      env:
+#        S3_BUILD_CACHE_ACCESS_KEY_ID: ${{ secrets.S3_BUILD_CACHE_ACCESS_KEY_ID }}
+#        S3_BUILD_CACHE_SECRET_KEY: ${{ secrets.S3_BUILD_CACHE_SECRET_KEY }}
       with:
         job-id: jdk8
         arguments: autostyleCheck checkstyleAll jandex
@@ -68,9 +68,9 @@ jobs:
       run: echo enable_ssl_tests=true > ssltest.local.properties
     - uses: burrunan/gradle-cache-action@v1
       name: Test
-      env:
-        S3_BUILD_CACHE_ACCESS_KEY_ID: ${{ secrets.S3_BUILD_CACHE_ACCESS_KEY_ID }}
-        S3_BUILD_CACHE_SECRET_KEY: ${{ secrets.S3_BUILD_CACHE_SECRET_KEY }}
+#      env:
+#        S3_BUILD_CACHE_ACCESS_KEY_ID: ${{ secrets.S3_BUILD_CACHE_ACCESS_KEY_ID }}
+#        S3_BUILD_CACHE_SECRET_KEY: ${{ secrets.S3_BUILD_CACHE_SECRET_KEY }}
       with:
         job-id: jdk8
         arguments: --no-parallel --no-daemon jandex build
@@ -97,9 +97,9 @@ jobs:
           java-version: 11
       - uses: burrunan/gradle-cache-action@v1
         name: Run CheckerFramework
-        env:
-          S3_BUILD_CACHE_ACCESS_KEY_ID: ${{ secrets.S3_BUILD_CACHE_ACCESS_KEY_ID }}
-          S3_BUILD_CACHE_SECRET_KEY: ${{ secrets.S3_BUILD_CACHE_SECRET_KEY }}
+#        env:
+#          S3_BUILD_CACHE_ACCESS_KEY_ID: ${{ secrets.S3_BUILD_CACHE_ACCESS_KEY_ID }}
+#          S3_BUILD_CACHE_SECRET_KEY: ${{ secrets.S3_BUILD_CACHE_SECRET_KEY }}
         with:
           job-id: checker-jdk11
           arguments: --no-parallel --no-daemon -PenableCheckerframework classes
@@ -120,9 +120,9 @@ jobs:
           java-version: 11
       - uses: burrunan/gradle-cache-action@v1
         name: Prepare source distribution
-        env:
-          S3_BUILD_CACHE_ACCESS_KEY_ID: ${{ secrets.S3_BUILD_CACHE_ACCESS_KEY_ID }}
-          S3_BUILD_CACHE_SECRET_KEY: ${{ secrets.S3_BUILD_CACHE_SECRET_KEY }}
+#        env:
+#          S3_BUILD_CACHE_ACCESS_KEY_ID: ${{ secrets.S3_BUILD_CACHE_ACCESS_KEY_ID }}
+#          S3_BUILD_CACHE_SECRET_KEY: ${{ secrets.S3_BUILD_CACHE_SECRET_KEY }}
         with:
           job-id: source-release-jdk11
           arguments: --no-parallel --no-daemon sourceDistribution -Ppgjdbc.version=1.0 -Prelease
