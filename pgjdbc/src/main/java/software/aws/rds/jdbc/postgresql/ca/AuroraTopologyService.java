@@ -188,7 +188,7 @@ public class AuroraTopologyService implements TopologyService {
     int writerCount = 0;
     try (Statement stmt = conn.createStatement()) {
       try (ResultSet resultSet = stmt.executeQuery(RETRIEVE_TOPOLOGY_SQL)) {
-        hosts.add(new HostInfo("?", null, HostInfo.NO_PORT, false));
+        hosts.add(new HostInfo("?", null, HostInfo.NO_PORT, false)); // reserve space for a writer node
 
         int i = 1;
         while (resultSet.next()) {
@@ -196,7 +196,7 @@ public class AuroraTopologyService implements TopologyService {
             if (writerCount == 0) {
               // store the first writer to its expected position [0]
               hosts.set(
-                      WRITER_CONNECTION_INDEX, createHost(resultSet));
+                  WRITER_CONNECTION_INDEX, createHost(resultSet));
             } else {
               // during failover, there could temporarily be two writers. Because we sorted by the last
               // updated timestamp, this host should be the obsolete writer, and it is about to become a reader
