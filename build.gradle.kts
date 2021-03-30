@@ -699,7 +699,7 @@ allprojects {
 }
 
 subprojects {
-    if (project.path.startsWith(":postgresql")) {
+    if (project.path.startsWith(":aws-postgresql-jdbc")) {
         plugins.withId("java") {
             configure<JavaPluginExtension> {
                 val sourceSets: SourceSetContainer by project

@@ -43,10 +43,10 @@ rootProject.name = "aws-postgresql-jdbc"
 include(
     "bom",
     "benchmarks",
-    "postgresql"
+    "aws-postgresql-jdbc"
 )
 
-project(":postgresql").projectDir = file("pgjdbc")
+project(":aws-postgresql-jdbc").projectDir = file("pgjdbc")
 
 // See https://github.com/gradle/gradle/issues/1348#issuecomment-284758705 and
 // https://github.com/gradle/gradle/issues/5321#issuecomment-387561204

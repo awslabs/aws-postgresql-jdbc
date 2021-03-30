@@ -240,10 +240,10 @@ karaf {
     features.apply {
         xsdVersion = "1.5.0"
         feature(closureOf<com.github.lburgazzoli.gradle.plugin.karaf.features.model.FeatureDescriptor> {
-            name = "postgresql"
-            description = "PostgreSQL JDBC driver karaf feature"
+            name = "aws-postgresql-jdbc"
+            description = "AWS PostgreSQL JDBC driver karaf feature"
             version = project.version.toString()
-            details = "Java JDBC 4.2 (JRE 8+) driver for PostgreSQL database"
+            details = "Java JDBC 4.2 (JRE 8+) driver for AWS PostgreSQL database"
             feature("transaction-api")
             includeProject = true
             bundle(project.group.toString(), closureOf<com.github.lburgazzoli.gradle.plugin.karaf.features.model.BundleDescriptor> {
