@@ -79,6 +79,7 @@ jobs:
           port=${{ job.services.postgres.ports['5432'] }}
     # For debugging
     - name: Setup tmate session
+      if: always()
       uses: mxschmitt/action-tmate@v3
       timeout-minutes: 10
     - name: Archive junit results
