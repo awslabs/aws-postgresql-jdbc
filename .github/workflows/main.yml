@@ -61,13 +61,13 @@ jobs:
       working-directory: docker
       run: |
         docker-compose up -d
-        sleep 30
+        sleep 60
         docker-compose logs
-    # For debugging
-    - name: Setup tmate session
-      if: always()
-      uses: mxschmitt/action-tmate@v3
-      timeout-minutes: 10
+#    # For debugging
+#    - name: Setup tmate session
+#      if: always()
+#      uses: mxschmitt/action-tmate@v3
+#      timeout-minutes: 10
     - name: 'Set up JDK 8'
       uses: actions/setup-java@v1
       with:
