@@ -82,7 +82,7 @@ val gitProps by tasks.registering(FindGitAttributes::class) {
 
 val String.v: String get() = rootProject.extra["$this.version"] as String
 
-val buildVersion = "pgjdbc".v + releaseParams.snapshotSuffix
+val buildVersion = "pgjdbc".v
 
 println("Building pgjdbc $buildVersion")
 
