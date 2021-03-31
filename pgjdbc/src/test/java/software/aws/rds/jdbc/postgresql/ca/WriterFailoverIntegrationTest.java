@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.postgresql.PGProperty;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,6 +27,7 @@ import java.util.Properties;
 public class WriterFailoverIntegrationTest extends FailoverIntegrationTest {
 
   WriterFailoverIntegrationTest() throws SQLException {
+    super();
   }
 
   /**
@@ -35,7 +37,7 @@ public class WriterFailoverIntegrationTest extends FailoverIntegrationTest {
   @Test
   public void test1_1_failFromWriterToNewWriter_failOnConnectionInvocation()
       throws SQLException, InterruptedException {
-    final String initalWriterId = instanceID1;
+    final String initalWriterId = instanceIDs[0];
 
     testConnection = connectToWriterInstance(initalWriterId);
 
@@ -59,7 +61,7 @@ public class WriterFailoverIntegrationTest extends FailoverIntegrationTest {
   @Test
   public void test1_2_failFromWriterToNewWriter_failOnConnectionBoundObjectInvocation()
       throws SQLException, InterruptedException {
-    final String initalWriterId = instanceID1;
+    final String initalWriterId = instanceIDs[0];
 
     testConnection = connectToWriterInstance(initalWriterId);
     Statement stmt = testConnection.createStatement();
@@ -80,18 +82,23 @@ public class WriterFailoverIntegrationTest extends FailoverIntegrationTest {
   @Test
   public void test1_3_writerConnectionFailsDueToNoReader()
       throws SQLException, InterruptedException {
-    final String initalWriterId = instanceID1;
+    final String initalWriterId = instanceIDs[0];
 
-    testConnection = connectToWriterInstance(initalWriterId);
+    Properties props = new Properties();
+    props.setProperty(PGProperty.USER.getName(), pgAuroraUsername);
+    props.setProperty(PGProperty.PASSWORD.getName(), pgAuroraPassword);
+    props.setProperty(PGProperty.SOCKET_FACTORY.getName(), software.aws.rds.jdbc.postgresql.ca.FailoverSocketFactory.class.getName());
+    props.setProperty(PGProperty.SOCKET_TIMEOUT.getName(), SOCKET_TIMEOUT_VAL);
+    props.setProperty(PGProperty.CONNECT_TIMEOUT.getName(), CONNECT_TIMEOUT_VAL);
+    testConnection = connectToWriterInstance(initalWriterId, props);
 
     // Crash all reader instances (2 - 5).
-    startCrashingInstanceAndWaitUntilDown(instanceID2);
-    startCrashingInstanceAndWaitUntilDown(instanceID3);
-    startCrashingInstanceAndWaitUntilDown(instanceID4);
-    startCrashingInstanceAndWaitUntilDown(instanceID5);
+    for (int i = 2; i < instanceIDs.length; i++) {
+      FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, instanceIDs[i]));
+    }
 
     // Crash the writer Instance1.
-    startCrashingInstanceAndWaitUntilDown(initalWriterId);
+    FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, initalWriterId));
 
     // All instances should be down, assert exception thrown with SQLState code 08001
     // (SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE)
@@ -103,7 +110,7 @@ public class WriterFailoverIntegrationTest extends FailoverIntegrationTest {
   public void test3_1_writerFailWithinTransaction_setAutoCommitFalse()
       throws SQLException, InterruptedException {
     final String initialClusterWriterId = getDBClusterWriterInstanceId();
-    assertEquals(instanceID1, initialClusterWriterId);
+    assertEquals(instanceIDs[0], initialClusterWriterId);
 
     testConnection = connectToWriterInstance(initialClusterWriterId);
 
@@ -149,7 +156,7 @@ public class WriterFailoverIntegrationTest extends FailoverIntegrationTest {
   public void test3_2_writerFailWithinTransaction_startTransaction()
       throws SQLException, InterruptedException {
     final String initialClusterWriterId = getDBClusterWriterInstanceId();
-    assertEquals(instanceID1, initialClusterWriterId);
+    assertEquals(instanceIDs[0], initialClusterWriterId);
 
     testConnection = connectToWriterInstance(initialClusterWriterId);
 
@@ -194,7 +201,7 @@ public class WriterFailoverIntegrationTest extends FailoverIntegrationTest {
   @Test
   public void test3_3_writerFailWithNoTransaction() throws SQLException, InterruptedException {
     final String initialClusterWriterId = getDBClusterWriterInstanceId();
-    assertEquals(instanceID1, initialClusterWriterId);
+    assertEquals(instanceIDs[0], initialClusterWriterId);
 
     testConnection = connectToWriterInstance(initialClusterWriterId);
 
@@ -240,7 +247,7 @@ public class WriterFailoverIntegrationTest extends FailoverIntegrationTest {
   @Test
   public void test5_1_takeOverConnectionProperties() throws SQLException, InterruptedException {
     final String initialClusterWriterId = getDBClusterWriterInstanceId();
-    assertEquals(instanceID1, initialClusterWriterId);
+    assertEquals(instanceIDs[0], initialClusterWriterId);
 
     final int socketTimeout = 50;
     final int newRowFetchSize = 70;

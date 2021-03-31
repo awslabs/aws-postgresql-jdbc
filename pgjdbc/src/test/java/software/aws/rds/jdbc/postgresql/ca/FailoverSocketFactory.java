@@ -84,6 +84,10 @@ public class FailoverSocketFactory extends SocketFactory {
     IMMEDIATELY_DOWNED_HOSTS.add(hostname);
   }
 
+  public static void upHost(String hostname) {
+    IMMEDIATELY_DOWNED_HOSTS.remove(hostname);
+  }
+
   public static String getHostFromLastConnection() {
     return getHostFromPastConnection(1);
   }
