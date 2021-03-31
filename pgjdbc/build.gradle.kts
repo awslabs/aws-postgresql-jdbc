@@ -171,6 +171,7 @@ val shadedLicenseFiles = licensesCopySpec(renderShadedLicense)
 // </editor-fold>
 
 tasks.configureEach<Jar> {
+    archiveBaseName.set("aws-postgresql-jdbc")
     manifest {
         attributes["Main-Class"] = "org.postgresql.util.PGJDBCMain"
         attributes["Automatic-Module-Name"] = "org.postgresql.jdbc"
@@ -182,7 +183,7 @@ tasks.register<ShadowJar>("jdbcShadowJar") {
     archiveClassifier.set("tmp")
 
     from(tasks.jar.map { zipTree(it.archiveFile) })
-    relocate("org.postgresql", "software.aws.rds.jdbc.shading.org.postgresql")
+    relocate("org.postgresql", "software.aws.rds.jdbc.postgresql.shading.org.postgresql")
 }
 
 tasks.register<Jar>("cleanJdbcShadowJar") {
@@ -207,10 +208,10 @@ tasks.shadowJar {
         dependencyLicenses(shadedLicenseFiles)
     }
 
-    relocate("org.postgresql", "software.aws.rds.jdbc.shading.org.postgresql") {
+    relocate("org.postgresql", "software.aws.rds.jdbc.postgresql.shading.org.postgresql") {
         exclude("org.postgresql.osgi.*")
     }
-    relocate("com.ongres", "software.aws.rds.jdbc.shading.com.ongres")
+    relocate("com.ongres", "software.aws.rds.jdbc.postgresql.shading.com.ongres")
 }
 
 val osgiJar by tasks.registering(Bundle::class) {
@@ -240,10 +241,10 @@ karaf {
     features.apply {
         xsdVersion = "1.5.0"
         feature(closureOf<com.github.lburgazzoli.gradle.plugin.karaf.features.model.FeatureDescriptor> {
-            name = "postgresql"
-            description = "PostgreSQL JDBC driver karaf feature"
+            name = "aws-postgresql-jdbc"
+            description = "AWS PostgreSQL JDBC driver karaf feature"
             version = project.version.toString()
-            details = "Java JDBC 4.2 (JRE 8+) driver for PostgreSQL database"
+            details = "Java JDBC 4.2 (JRE 8+) driver for AWS PostgreSQL database"
             feature("transaction-api")
             includeProject = true
             bundle(project.group.toString(), closureOf<com.github.lburgazzoli.gradle.plugin.karaf.features.model.BundleDescriptor> {
