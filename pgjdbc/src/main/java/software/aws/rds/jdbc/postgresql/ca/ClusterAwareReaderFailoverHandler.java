@@ -181,14 +181,16 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
    */
   private void addActiveReaders(List<HostInfo> list, List<HostInfo> hosts, Set<String> downHosts) {
     List<HostInfo> activeReaders = new ArrayList<>();
-    for (int i = WRITER_CONNECTION_INDEX + 1; i < hosts.size(); i++) {
-      HostInfo host = hosts.get(i);
-      if (!downHosts.contains(host.getHostPortPair())) {
-        activeReaders.add(host);
+    if (hosts != null) {
+      for (int i = WRITER_CONNECTION_INDEX + 1; i < hosts.size(); i++) {
+        HostInfo host = hosts.get(i);
+        if (!downHosts.contains(host.getHostPortPair())) {
+          activeReaders.add(host);
+        }
       }
+      Collections.shuffle(activeReaders);
+      list.addAll(activeReaders);
     }
-    Collections.shuffle(activeReaders);
-    list.addAll(activeReaders);
   }
 
   /**
@@ -250,14 +252,16 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
    */
   private void addDownReaders(List<HostInfo> list, List<HostInfo> hosts, Set<String> downHosts) {
     List<HostInfo> downReaders = new ArrayList<>();
-    for (int i = WRITER_CONNECTION_INDEX + 1; i < hosts.size(); i++) {
-      HostInfo host = hosts.get(i);
-      if (downHosts.contains(host.getHostPortPair())) {
-        downReaders.add(host);
+    if (hosts != null) {
+      for (int i = WRITER_CONNECTION_INDEX + 1; i < hosts.size(); i++) {
+        HostInfo host = hosts.get(i);
+        if (downHosts.contains(host.getHostPortPair())) {
+          downReaders.add(host);
+        }
       }
+      Collections.shuffle(downReaders);
+      list.addAll(downReaders);
     }
-    Collections.shuffle(downReaders);
-    list.addAll(downReaders);
   }
 
   /**

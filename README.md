@@ -66,7 +66,7 @@ dependencies {
 As a drop-in compatible, usage of the AWS JDBC Driver for PostgreSQL is identical to the [PostgreSQL JDBC Driver](https://github.com/pgjdbc/pgjdbc). The sections below highlight usage specific to failover.
 
 #### Driver Name
-The driver name to use is: ```software.aws.rds.jdbc.Driver```. This will be needed when loading the driver explicitly to the driver manager.
+The driver name to use is: ```software.aws.rds.jdbc.postgresql.Driver```. This will be needed when loading the driver explicitly to the driver manager.
 
 #### Connection URL Descriptions
 
@@ -83,7 +83,7 @@ Note: The connection string follows standard URL parameters. In order to add par
 | RDS Custom Cluster | `jdbc:postgresql:aws://db-identifier.cluster-custom-XYZ.us-east-2l.rds.amazonaws.com:5432`      |    None | *Initial connection:* any DB instance in the custom DB cluster<br/>*Failover behavior:* connect to the primary DB instance (note that this might be outside of the custom DB cluster) |
 | IP Address | `jdbc:postgresql:aws://10.10.10.10:5432`      |    `clusterInstanceHostPattern` | *Initial connection:* the DB instance specified<br/>*Failover behavior:* connect to the primary DB instance |
 | Custom Domain | `jdbc:postgresql:aws://my-custom-domain.com:5432`      |    `clusterInstanceHostPattern` | *Initial connection:* the DB instance specified<br/>*Failover behavior:* connect to the primary DB instance |
-| Non-Aurora Endpoint | `jdbc:postgresql:aws://localhost:5432`     |    `clusterInstanceHostPattern` | A regular JDBC connection will be returned - no failover functionality |
+| Non-Aurora Endpoint | `jdbc:postgresql:aws://localhost:5432`     |    None | A regular JDBC connection will be returned - no failover functionality |
 
 (Information about the `clusterInstanceHostPattern` is mentioned in the section below.)
 

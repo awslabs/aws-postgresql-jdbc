@@ -258,8 +258,7 @@ public class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
         Thread.currentThread().interrupt();
         return new WriterFailoverResult(false, false, new ArrayList<>(), null);
       } catch (Exception ex) {
-        LOGGER.log(Level.WARNING, "[ClusterAwareWriterFailoverHandler] [TaskA] encountered an exception: {0}",
-            ex.getMessage());
+        LOGGER.log(Level.WARNING, "[ClusterAwareWriterFailoverHandler] [TaskA] encountered an exception:", ex);
         throw ex;
       } finally {
         LOGGER.log(Level.FINE, "[ClusterAwareWriterFailoverHandler] [TaskA] Finished");
@@ -332,8 +331,7 @@ public class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
         return new WriterFailoverResult(false, false, new ArrayList<>(), null);
       } catch (Exception ex) {
         LOGGER.log(Level.WARNING,
-            "[ClusterAwareWriterFailoverHandler] [TaskB] encountered an exception: {0}",
-            ex.getMessage());
+            "[ClusterAwareWriterFailoverHandler] [TaskB] encountered an exception:", ex);
         throw ex;
       } finally {
         shutdown();

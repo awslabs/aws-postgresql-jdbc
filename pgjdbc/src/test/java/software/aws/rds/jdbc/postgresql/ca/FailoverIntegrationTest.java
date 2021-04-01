@@ -26,10 +26,15 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
@@ -67,13 +72,16 @@ public abstract class FailoverIntegrationTest {
   protected final String pgAuroraWriterConnectionStr = pgJDBCProtocol + pgAuroraClusterIdentifier
       + ".cluster-" + dbAuroraInstanceConnectionStrSuffix.substring(1);
 
-  protected static final int TEST_CLUSTER_SIZE = 5;
-  protected static String instanceID1 = "";
-  protected static String instanceID2 = "";
-  protected static String instanceID3 = "";
-  protected static String instanceID4 = "";
-  protected static String instanceID5 = "";
+  protected final String pgHostInstancePattern = "%s" + pgAuroraInstanceDnsSuffix;
+
+  protected int clusterSize = 0;
+  protected String[] instanceIDs; // index 0 is always writer!
+  protected final HashSet<String> instancesToCrash = new HashSet<>();
+  protected ExecutorService crashInstancesExecutorService;
+
   protected static final int IS_VALID_TIMEOUT = 5;
+  protected static final String SOCKET_TIMEOUT_VAL = "1"; //sec
+  protected static final String CONNECT_TIMEOUT_VAL = "3"; //sec
 
   private static final String NO_SUCH_CLUSTER_MEMBER =
       "Cannot find cluster member whose db instance identifier is ";
@@ -82,15 +90,7 @@ public abstract class FailoverIntegrationTest {
 
   private final AmazonRDS rdsClient = AmazonRDSClientBuilder.standard().build();
   protected Connection testConnection;
-  private final Logger logger = Logger.getLogger(FailoverIntegrationTest.class.getName());
-
-  private CrashInstanceRunnable instanceCrasher1;
-  private CrashInstanceRunnable instanceCrasher2;
-  private CrashInstanceRunnable instanceCrasher3;
-  private CrashInstanceRunnable instanceCrasher4;
-  private CrashInstanceRunnable instanceCrasher5;
-
-  private Map<String, CrashInstanceRunnable> instanceCrasherMap = new HashMap<>();
+  protected final Logger logger = Logger.getLogger(FailoverIntegrationTest.class.getName());
   private Map<String, String> ipToInstanceMap = new HashMap<>();
 
   public FailoverIntegrationTest() throws SQLException {
@@ -100,25 +100,17 @@ public abstract class FailoverIntegrationTest {
 
     initiateInstanceNames();
 
-    instanceCrasher1 = new CrashInstanceRunnable(instanceID1);
-    instanceCrasher2 = new CrashInstanceRunnable(instanceID2);
-    instanceCrasher3 = new CrashInstanceRunnable(instanceID3);
-    instanceCrasher4 = new CrashInstanceRunnable(instanceID4);
-    instanceCrasher5 = new CrashInstanceRunnable(instanceID5);
-
-    instanceCrasherMap.put(instanceID1, instanceCrasher1);
-    instanceCrasherMap.put(instanceID2, instanceCrasher2);
-    instanceCrasherMap.put(instanceID3, instanceCrasher3);
-    instanceCrasherMap.put(instanceID4, instanceCrasher4);
-    instanceCrasherMap.put(instanceID5, instanceCrasher5);
-
     // initializing ipToStringMap by creating connections to each instances and fetching their IPs
-    initiateIpMap(instanceID1);
-    initiateIpMap(instanceID2);
-    initiateIpMap(instanceID3);
-    initiateIpMap(instanceID4);
-    initiateIpMap(instanceID5);
-    logger.log(Level.INFO, ipToInstanceMap.toString());
+    for (String id : instanceIDs) {
+      initiateIpMap(id);
+    }
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("Cluster Instance IP addresses: \n");
+    for (String ip : ipToInstanceMap.keySet()) {
+      sb.append(ip + " -> " + ipToInstanceMap.get(ip) + (instanceIDs[0].equals(ipToInstanceMap.get(ip)) ? " (WRITER)" : "") + "\n");
+    }
+    logger.log(Level.INFO, sb.toString());
   }
 
   private void configureDriverLogger() {
@@ -141,7 +133,7 @@ public abstract class FailoverIntegrationTest {
 
   private void initiateIpMap(String instanceID) throws SQLException {
 
-    Connection connection = createConnectionToInstanceWithId(instanceID);
+    Connection connection = createConnectionWithProxyDisabled(instanceID);
 
     try {
       Statement myStmt = connection.createStatement();
@@ -171,12 +163,14 @@ public abstract class FailoverIntegrationTest {
     logger.log(Level.INFO, "Initiating db instance names.");
     List<DBClusterMember> dbClusterMembers = getDBClusterMemberList();
 
-    assertEquals(TEST_CLUSTER_SIZE, dbClusterMembers.size());
-    instanceID1 = dbClusterMembers.get(0).getDBInstanceIdentifier();
-    instanceID2 = dbClusterMembers.get(1).getDBInstanceIdentifier();
-    instanceID3 = dbClusterMembers.get(2).getDBInstanceIdentifier();
-    instanceID4 = dbClusterMembers.get(3).getDBInstanceIdentifier();
-    instanceID5 = dbClusterMembers.get(4).getDBInstanceIdentifier();
+    clusterSize = dbClusterMembers.size();
+    assertTrue(clusterSize >= 2); // many tests assume that cluster contains at least a writer and a reader
+
+    instanceIDs = dbClusterMembers.stream()
+        .sorted(Comparator.comparing((DBClusterMember x) -> !x.isClusterWriter())
+                .thenComparing((DBClusterMember x) -> x.getDBInstanceIdentifier()))
+        .map((DBClusterMember m) -> m.getDBInstanceIdentifier())
+        .toArray(String[]::new);
   }
 
   private List<DBClusterMember> getDBClusterMemberList() {
@@ -302,12 +296,16 @@ public abstract class FailoverIntegrationTest {
         pgAuroraPassword);
   }
 
+  protected Connection createConnectionToReadonlyClusterEndpoint(Properties props) throws SQLException {
+    return DriverManager.getConnection(pgAuroraReadonlyConnectionStr, props);
+  }
+
   private Connection createConnectionToInstanceWithId(String instanceID) throws SQLException {
     return DriverManager.getConnection(
         pgJDBCProtocol + instanceID + dbAuroraInstanceConnectionStrSuffix, pgAuroraUsername, pgAuroraPassword);
   }
 
-  private Connection createConnectionToInstanceWithId(String instanceID, Properties props) throws SQLException {
+  protected Connection createConnectionToInstanceWithId(String instanceID, Properties props) throws SQLException {
     return DriverManager.getConnection(
         pgJDBCProtocol + instanceID + dbAuroraInstanceConnectionStrSuffix, props);
   }
@@ -317,6 +315,18 @@ public abstract class FailoverIntegrationTest {
         pgJDBCProtocol + instanceID + dbAuroraInstanceConnectionStrSuffix + "?enableClusterAwareFailover=false",
         pgAuroraUsername,
         pgAuroraPassword);
+  }
+
+  private Connection createCrashConnection(String instanceID) throws SQLException {
+    final Properties props = new Properties();
+    props.setProperty("user", pgAuroraUsername);
+    props.setProperty("password", pgAuroraPassword);
+    props.setProperty("enableClusterAwareFailover", "false");
+    props.setProperty("connectTimeout", "2");
+    props.setProperty("socketTimeout", "2");
+    props.setProperty("loginTimeout", "3");
+
+    return DriverManager.getConnection(pgJDBCProtocol + instanceID + dbAuroraInstanceConnectionStrSuffix, props);
   }
 
   protected Connection createPooledConnectionWithInstanceId(String instanceID) throws SQLException {
@@ -338,6 +348,13 @@ public abstract class FailoverIntegrationTest {
     return testConnection;
   }
 
+  protected Connection connectToReaderInstance(String readerInstanceId, Properties props) throws SQLException {
+    final Connection testConnection = createConnectionToInstanceWithId(readerInstanceId, props);
+    testConnection.setReadOnly(true);
+    assertTrue(isDBInstanceReader(queryInstanceId(testConnection)));
+    return testConnection;
+  }
+
   protected Connection connectToWriterInstance(String writerInstanceId) throws SQLException {
     final Connection testConnection = createConnectionToInstanceWithId(writerInstanceId);
     assertTrue(isDBInstanceWriter(queryInstanceId(testConnection)));
@@ -351,9 +368,18 @@ public abstract class FailoverIntegrationTest {
   }
 
   protected String queryInstanceId(Connection connection) throws SQLException {
-    try (Statement myStmt = connection.createStatement()) {
-      return executeInstanceIdQuery(myStmt);
+
+    try (Statement myStmt = connection.createStatement();
+         ResultSet resultSet = myStmt.executeQuery("select inet_server_addr()")
+    ) {
+      if (resultSet.next()) {
+        String instance = ipToInstanceMap.get(resultSet.getString(1));
+        myStmt.close();
+        resultSet.close();
+        return instance;
+      }
     }
+    return null;
   }
 
   protected String executeInstanceIdQuery(Statement stmt) throws SQLException {
@@ -363,7 +389,7 @@ public abstract class FailoverIntegrationTest {
         return instance;
       }
     }
-    throw new SQLException();
+    throw null;
   }
 
   protected String querySelect1(Connection connection) throws SQLException {
@@ -374,12 +400,12 @@ public abstract class FailoverIntegrationTest {
         return resultSet.getString(1);
       }
     }
-    throw new SQLException();
+    return null;
   }
+
   // Attempt to run a query after the instance is down.
   // This should initiate the driver failover, first query after a failover
   // should always throw with the expected error message.
-
   protected void assertFirstQueryThrows(Connection connection, String expectedSQLErrorCode) {
     logger.log(Level.INFO,
         "Assert that the first read query throws, "
@@ -396,141 +422,129 @@ public abstract class FailoverIntegrationTest {
     assertEquals(expectedSQLErrorCode, exception.getSQLState());
   }
 
-  private void waitUntilFirstInstanceIsWriter() throws InterruptedException {
-    logger.log(Level.INFO,"Failover cluster to Instance 1.");
-    failoverClusterWithATargetInstance(instanceID1);
-    String clusterWriterId = getDBClusterWriterInstanceId();
-
-    logger.log(Level.INFO,"Wait until Instance 1 becomes the writer.");
-    while (!instanceID1.equals(clusterWriterId)) {
-      clusterWriterId = getDBClusterWriterInstanceId();
-      logger.log(Level.INFO, "Writer is still " + clusterWriterId);
-      Thread.sleep(1000);
-    }
-  }
-
-  /**
-   * Block until the specified instance is inaccessible.
-   * */
-  public void waitUntilInstanceIsDown(String instanceId) throws InterruptedException {
-    logger.log(Level.INFO,"Wait until " + instanceId + " is down.");
-    while (true) {
-      try (Connection conn = createConnectionWithProxyDisabled(instanceId)) {
-        // Continue waiting until instance is down.
-      } catch (SQLException e) {
-        break;
-      }
-      Thread.sleep(1000);
-    }
-  }
-
-  /**
-   * Block until the specified instance is accessible again.
-   * */
-  public void waitUntilInstanceIsUp(String instanceId) throws InterruptedException {
-    logger.log(Level.INFO,"Wait until " + instanceId + " is up.");
-    while (true) {
-      try (Connection conn = createConnectionWithProxyDisabled(instanceId)) {
-        conn.close();
-        break;
-      } catch (SQLException ex) {
-        // Continue waiting until instance is up.
-      }
-      Thread.sleep(1000);
-    }
-    logger.log(Level.INFO,instanceId + " is up.");
-  }
-
   @BeforeEach
-  private void resetCluster() throws InterruptedException {
-    logger.log(Level.INFO,"Resetting cluster.");
-    waitUntilFirstInstanceIsWriter();
-    waitUntilInstanceIsUp(instanceID1);
-    waitUntilInstanceIsUp(instanceID2);
-    waitUntilInstanceIsUp(instanceID3);
-    waitUntilInstanceIsUp(instanceID4);
-    waitUntilInstanceIsUp(instanceID5);
+  private void validateCluster() throws InterruptedException {
+    logger.log(Level.INFO,"Validating cluster.");
+
+    crashInstancesExecutorService = Executors.newFixedThreadPool(instanceIDs.length);
+    instancesToCrash.clear();
+    for (String id : instanceIDs) {
+      crashInstancesExecutorService.submit(() -> {
+        while (true) {
+          if (instancesToCrash.contains(id)) {
+            try (Connection conn = createCrashConnection(id);
+                 Statement myStmt = conn.createStatement()
+            ) {
+              myStmt.execute("SELECT aurora_inject_crash('instance')");
+            } catch (SQLException e) {
+              // Do nothing and keep creating connection to crash instance.
+            }
+          }
+          Thread.sleep(100);
+        }
+      });
+    }
+    crashInstancesExecutorService.shutdown();
+
+    makeSureInstancesUp(instanceIDs);
+    FailoverSocketFactory.flushAllStaticData();
+
+    logger.log(Level.INFO,"===================== Pre-Test init is done. Ready for test =====================");
   }
 
   @AfterEach
   private void reviveInstancesAndCloseTestConnection() throws SQLException, InterruptedException {
-    reviveAllInstances();
-    testConnection.close();
-    TimeUnit.SECONDS.sleep(2); // Wait for 2 seconds to avoid any connection errors on subsequent tests
+    logger.log(Level.INFO,"===================== Test is over. Post-Test clean-up is below. =====================");
+
+    try {
+      testConnection.close();
+    } catch (Exception ex) {
+      // ignore
+    }
+    testConnection = null;
+
+    instancesToCrash.clear();
+    crashInstancesExecutorService.shutdownNow();
+
+    makeSureInstancesUp(instanceIDs, false);
   }
 
-  private void reviveAllInstances() {
-    logger.log(Level.INFO,"Revive all crashed instances in the test and wait until they are up.");
-    instanceCrasherMap.forEach(
-        (instanceId, instanceCrasher) -> {
-          try {
-            stopCrashingInstanceAndWaitUntilUp(instanceId);
-          } catch (InterruptedException ex) {
-            logger.log(Level.INFO,"Exception occurred while trying to stop crashing an instance.");
+  protected void startCrashingInstances(String... instances) {
+    instancesToCrash.addAll(Arrays.asList(instances));
+  }
+
+  protected void stopCrashingInstances(String... instances) {
+    instancesToCrash.removeAll(Arrays.asList(instances));
+  }
+
+  protected void makeSureInstancesUp(String... instances) throws InterruptedException {
+    makeSureInstancesUp(instances, true);
+  }
+
+  protected void makeSureInstancesUp(String[] instances, boolean finalCheck) throws InterruptedException {
+    logger.log(Level.INFO,"Wait until the following instances are up: \n" + String.join("\n", instances));
+    ExecutorService executorService = Executors.newFixedThreadPool(instances.length);
+    final HashSet<String> remainingInstances = new HashSet<String>();
+    remainingInstances.addAll(Arrays.asList(instances));
+
+    for (String id : instances) {
+      executorService.submit(() -> {
+        while (true) {
+          try (Connection conn = createCrashConnection(id)) {
+            conn.close();
+            remainingInstances.remove(id);
+            break;
+          } catch (SQLException ex) {
+            // Continue waiting until instance is up.
           }
-        });
-  }
-
-  protected void stopCrashingInstanceAndWaitUntilUp(String instanceId)
-      throws InterruptedException {
-    logger.log(Level.INFO,"Stop crashing " + instanceId + ".");
-    CrashInstanceRunnable instanceCrasher = instanceCrasherMap.get(instanceId);
-    instanceCrasher.stopCrashingInstance();
-    waitUntilInstanceIsUp(instanceId);
-  }
-
-  /**
-   * Start crashing the specified instance and wait until its inaccessible.
-   * */
-  protected void startCrashingInstanceAndWaitUntilDown(String instanceId)
-      throws InterruptedException {
-    logger.log(Level.INFO,"Start crashing " + instanceId + ".");
-    CrashInstanceRunnable instanceCrasher = instanceCrasherMap.get(instanceId);
-    instanceCrasher.startCrashingInstance();
-    Thread instanceCrasherThread = new Thread(instanceCrasher);
-    instanceCrasherThread.start();
-    waitUntilInstanceIsDown(instanceId);
-  }
-
-  /**
-   * Runnable class implementation that is used to crash an instance.
-   * */
-  public class CrashInstanceRunnable implements Runnable {
-    static final String CRASH_QUERY = "SELECT aurora_inject_crash('instance')";
-    private final String instanceId;
-    private boolean keepCrashingInstance = false;
-
-    CrashInstanceRunnable(String instanceId) {
-      logger.log(Level.INFO,"create runnable for " + instanceId);
-      this.instanceId = instanceId;
-    }
-
-    public String getInstanceId() {
-      return this.instanceId;
-    }
-
-    public synchronized void stopCrashingInstance() {
-      this.keepCrashingInstance = false;
-    }
-
-    public synchronized void startCrashingInstance() {
-      this.keepCrashingInstance = true;
-    }
-
-    @Override
-    public void run() {
-      while (keepCrashingInstance) {
-        try (Connection conn = createConnectionWithProxyDisabled(instanceId);
-            Statement myStmt = conn.createStatement()
-        ) {
-          myStmt.execute(CRASH_QUERY);
-        } catch (SQLException e) {
-          // Do nothing and keep creating connection to crash instance.
+          Thread.sleep(500);
         }
-      }
-      // Run the garbage collector in the Java Virtual Machine to abandon thread.
-      System.gc();
+        return null;
+      });
     }
+    executorService.shutdown();
+    executorService.awaitTermination(120, TimeUnit.SECONDS);
+
+    if (finalCheck) {
+      assertTrue(remainingInstances.isEmpty(), "The following instances are still down: \n"
+              + String.join("\n", remainingInstances));
+    }
+
+    logger.log(Level.INFO,"The following instances are up: \n" + String.join("\n", instances));
   }
 
+  protected void makeSureInstancesDown(String... instances) throws InterruptedException {
+    makeSureInstancesDown(instances, true);
+  }
+
+  protected void makeSureInstancesDown(String[] instances, boolean finalCheck) throws InterruptedException {
+    logger.log(Level.INFO,"Wait until the following instances are down: \n" + String.join("\n", instances));
+    ExecutorService executorService = Executors.newFixedThreadPool(instances.length);
+    final HashSet<String> remainingInstances = new HashSet<String>();
+    remainingInstances.addAll(Arrays.asList(instances));
+
+    for (String id : instances) {
+      executorService.submit(() -> {
+        while (true) {
+          try (Connection conn = createCrashConnection(id)) {
+            // Continue waiting until instance is down.
+          } catch (SQLException e) {
+            remainingInstances.remove(id);
+            break;
+          }
+          Thread.sleep(500);
+        }
+        return null;
+      });
+    }
+    executorService.shutdown();
+    executorService.awaitTermination(120, TimeUnit.SECONDS);
+
+    if (finalCheck) {
+      assertTrue(remainingInstances.isEmpty(), "The following instances are still up: \n"
+              + String.join("\n", remainingInstances));
+    }
+
+    logger.log(Level.INFO,"The following instances are down: \n" + String.join("\n", instances));
+  }
 }

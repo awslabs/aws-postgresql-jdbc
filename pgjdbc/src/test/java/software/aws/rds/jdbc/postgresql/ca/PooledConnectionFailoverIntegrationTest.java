@@ -22,6 +22,7 @@ import java.sql.SQLException;
 public class PooledConnectionFailoverIntegrationTest extends FailoverIntegrationTest {
 
   PooledConnectionFailoverIntegrationTest() throws SQLException {
+    super();
   }
 
   /** Writer connection failover within the connection pool. */
@@ -29,12 +30,12 @@ public class PooledConnectionFailoverIntegrationTest extends FailoverIntegration
   public void test4_1_pooledWriterConnection_basicfailover()
       throws SQLException, InterruptedException {
     final String initalWriterId = getDBClusterWriterInstanceId();
-    assertEquals(instanceID1, initalWriterId);
+    assertEquals(instanceIDs[0], initalWriterId);
 
     testConnection = createPooledConnectionWithInstanceId(initalWriterId);
 
     // Crash writer Instance1 and nominate Instance2 as the new writer
-    failoverClusterToATargetAndWaitUntilWriterChanged(initalWriterId, instanceID2);
+    failoverClusterToATargetAndWaitUntilWriterChanged(initalWriterId, instanceIDs[1]);
 
     assertFirstQueryThrows(testConnection, "08S02");
 
@@ -45,7 +46,7 @@ public class PooledConnectionFailoverIntegrationTest extends FailoverIntegration
     assertTrue(isDBInstanceWriter(currentConnectionId));
     final String nextWriterId = getDBClusterWriterInstanceId();
     assertEquals(nextWriterId, currentConnectionId);
-    assertEquals(instanceID2, currentConnectionId);
+    assertEquals(instanceIDs[1], currentConnectionId);
 
     // Assert that the pooled connection is valid.
     assertTrue(testConnection.isValid(IS_VALID_TIMEOUT));
@@ -55,17 +56,18 @@ public class PooledConnectionFailoverIntegrationTest extends FailoverIntegration
   @Test
   public void test4_2_pooledReaderConnection_basicfailover()
       throws SQLException, InterruptedException {
-    testConnection = createPooledConnectionWithInstanceId(instanceID2);
+    testConnection = createPooledConnectionWithInstanceId(instanceIDs[1]);
     testConnection.setReadOnly(true);
 
-    startCrashingInstanceAndWaitUntilDown(instanceID2);
+    startCrashingInstances(instanceIDs[1]);
+    makeSureInstancesDown(instanceIDs[1]);
 
     assertFirstQueryThrows(testConnection, "08S02");
 
     // Assert that we are now connected to a new reader instance.
     final String currentConnectionId = queryInstanceId(testConnection);
     assertTrue(isDBInstanceReader(currentConnectionId));
-    assertNotEquals(currentConnectionId, instanceID2);
+    assertNotEquals(currentConnectionId, instanceIDs[1]);
 
     // Assert that the pooled connection is valid.
     assertTrue(testConnection.isValid(IS_VALID_TIMEOUT));
