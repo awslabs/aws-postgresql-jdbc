@@ -69,7 +69,7 @@ public class AuroraTopologyService implements TopologyService {
   public AuroraTopologyService(int refreshRateInMilliseconds) {
     this.refreshRateInMilliseconds = refreshRateInMilliseconds;
     this.clusterId = UUID.randomUUID().toString();
-    this.clusterInstanceTemplate = new HostInfo("null", "null", HostInfo.NO_PORT, false);
+    this.clusterInstanceTemplate = new HostInfo("?", null, HostInfo.NO_PORT, false);
   }
 
   /**
@@ -188,7 +188,7 @@ public class AuroraTopologyService implements TopologyService {
     int writerCount = 0;
     try (Statement stmt = conn.createStatement()) {
       try (ResultSet resultSet = stmt.executeQuery(RETRIEVE_TOPOLOGY_SQL)) {
-        hosts.add(new HostInfo("null", "null", HostInfo.NO_PORT, false)); // reserve space for a writer node
+        hosts.add(new HostInfo("?", null, HostInfo.NO_PORT, false)); // reserve space for a writer node
 
         int i = 1;
         while (resultSet.next()) {
@@ -259,11 +259,8 @@ public class AuroraTopologyService implements TopologyService {
    */
   private String getHostEndpoint(String nodeName) {
     String host = this.clusterInstanceTemplate.getHost();
-    if (host == null) {
-      return "null";
-    } else {
-      return host.replace("?", nodeName);
-    }
+    return host.replace("?", nodeName);
+
   }
 
   /**
