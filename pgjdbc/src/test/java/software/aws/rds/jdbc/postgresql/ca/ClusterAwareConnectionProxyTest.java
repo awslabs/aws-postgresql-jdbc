@@ -59,7 +59,7 @@ public class ClusterAwareConnectionProxyTest {
 
     final ClusterAwareConnectionProxy proxy =
         new ClusterAwareConnectionProxy(
-            hostSpec, props ,url, mockConnectionProvider, mockTopologyService, Mockito.mock(WriterFailoverHandler.class), Mockito.mock(ReaderFailoverHandler.class));
+            hostSpec, props ,url, mockConnectionProvider, mockTopologyService, Mockito.mock(WriterFailoverHandler.class), Mockito.mock(ReaderFailoverHandler.class), new RdsDnsAnalyzer());
 
     assertFalse(proxy.enableFailoverSetting);
     assertEquals(mockConn, proxy.getConnection());
@@ -86,7 +86,7 @@ public class ClusterAwareConnectionProxyTest {
 
     final ClusterAwareConnectionProxy proxy =
         new ClusterAwareConnectionProxy(
-            hostSpec, props ,url, mockConnectionProvider, mockTopologyService, Mockito.mock(WriterFailoverHandler.class), Mockito.mock(ReaderFailoverHandler.class));
+            hostSpec, props ,url, mockConnectionProvider, mockTopologyService, Mockito.mock(WriterFailoverHandler.class), Mockito.mock(ReaderFailoverHandler.class), new RdsDnsAnalyzer());
 
     assertFalse(proxy.isRds());
     assertFalse(proxy.isRdsProxy());
@@ -113,7 +113,7 @@ public class ClusterAwareConnectionProxyTest {
 
     final ClusterAwareConnectionProxy proxy =
         new ClusterAwareConnectionProxy(
-            hostSpec, props, url, mockConnectionProvider, mockTopologyService, Mockito.mock(WriterFailoverHandler.class), Mockito.mock(ReaderFailoverHandler.class));
+            hostSpec, props, url, mockConnectionProvider, mockTopologyService, Mockito.mock(WriterFailoverHandler.class), Mockito.mock(ReaderFailoverHandler.class), new RdsDnsAnalyzer());
 
     assertTrue(proxy.isConnected());
     assertNull(proxy.currentHost);
@@ -173,7 +173,8 @@ public class ClusterAwareConnectionProxyTest {
             mockConnectionProvider,
             mockTopologyService,
             writerFailoverHandler,
-            readerFailoverHandler);
+            readerFailoverHandler,
+            new RdsDnsAnalyzer());
 
     assertTrue(proxy.isRds());
     assertFalse(proxy.isRdsProxy());
@@ -218,7 +219,8 @@ public class ClusterAwareConnectionProxyTest {
             mockConnectionProvider,
             mockTopologyService,
             writerFailoverHandler,
-            readerFailoverHandler);
+            readerFailoverHandler,
+            new RdsDnsAnalyzer());
 
     assertTrue(proxy.isRds());
     assertFalse(proxy.isRdsProxy());
@@ -263,7 +265,8 @@ public class ClusterAwareConnectionProxyTest {
             mockConnectionProvider,
             mockTopologyService,
             writerFailoverHandler,
-            readerFailoverHandler);
+            readerFailoverHandler,
+            new RdsDnsAnalyzer());
 
     assertTrue(proxy.isRds());
     assertFalse(proxy.isRdsProxy());
@@ -306,7 +309,8 @@ public class ClusterAwareConnectionProxyTest {
             mockConnectionProvider,
             mockTopologyService,
             writerFailoverHandler,
-            readerFailoverHandler);
+            readerFailoverHandler,
+            new RdsDnsAnalyzer());
 
     assertTrue(proxy.isRds());
     assertFalse(proxy.isRdsProxy());
@@ -348,7 +352,8 @@ public class ClusterAwareConnectionProxyTest {
             mockConnectionProvider,
             mockTopologyService,
             writerFailoverHandler,
-            readerFailoverHandler);
+            readerFailoverHandler,
+            new RdsDnsAnalyzer());
 
     assertTrue(proxy.isRds());
     assertTrue(proxy.isRdsProxy());
@@ -392,7 +397,8 @@ public class ClusterAwareConnectionProxyTest {
             mockConnectionProvider,
             mockTopologyService,
             writerFailoverHandler,
-            readerFailoverHandler);
+            readerFailoverHandler,
+            new RdsDnsAnalyzer());
 
     assertFalse(proxy.isRds());
     assertFalse(proxy.isRdsProxy());
@@ -432,7 +438,8 @@ public class ClusterAwareConnectionProxyTest {
             mockConnectionProvider,
             mockTopologyService,
             writerFailoverHandler,
-            readerFailoverHandler);
+            readerFailoverHandler,
+            new RdsDnsAnalyzer());
 
     assertFalse(proxy.isRds());
     assertFalse(proxy.isRdsProxy());
@@ -474,7 +481,8 @@ public class ClusterAwareConnectionProxyTest {
             mockConnectionProvider,
             mockTopologyService,
             writerFailoverHandler,
-            readerFailoverHandler);
+            readerFailoverHandler,
+            new RdsDnsAnalyzer());
 
     assertFalse(proxy.isRds());
     assertFalse(proxy.isRdsProxy());
@@ -509,7 +517,8 @@ public class ClusterAwareConnectionProxyTest {
             mockConnectionProvider,
             mockTopologyService,
             writerFailoverHandler,
-            readerFailoverHandler));
+            readerFailoverHandler,
+            new RdsDnsAnalyzer()));
   }
 
   @Test
@@ -536,7 +545,8 @@ public class ClusterAwareConnectionProxyTest {
             mockConnectionProvider,
             mockTopologyService,
             writerFailoverHandler,
-            readerFailoverHandler);
+            readerFailoverHandler,
+            new RdsDnsAnalyzer());
 
     assertFalse(proxy.isRds());
     assertFalse(proxy.isRdsProxy());
@@ -578,7 +588,8 @@ public class ClusterAwareConnectionProxyTest {
             mockConnectionProvider,
             mockTopologyService,
             Mockito.mock(WriterFailoverHandler.class),
-            Mockito.mock(ReaderFailoverHandler.class));
+            Mockito.mock(ReaderFailoverHandler.class),
+            new RdsDnsAnalyzer());
 
     assertTrue(proxy.isConnected());
     assertEquals(writerHost, proxy.currentHost);
@@ -614,7 +625,8 @@ public class ClusterAwareConnectionProxyTest {
             mockConnectionProvider,
             mockTopologyService,
             Mockito.mock(WriterFailoverHandler.class),
-            Mockito.mock(ReaderFailoverHandler.class));
+            Mockito.mock(ReaderFailoverHandler.class),
+            new RdsDnsAnalyzer());
 
     assertTrue(proxy.isConnected());
     assertNull(proxy.currentHost);
@@ -655,7 +667,8 @@ public class ClusterAwareConnectionProxyTest {
             mockConnectionProvider,
             mockTopologyService,
             Mockito.mock(WriterFailoverHandler.class),
-            Mockito.mock(ReaderFailoverHandler.class));
+            Mockito.mock(ReaderFailoverHandler.class),
+            new RdsDnsAnalyzer());
 
     assertTrue(proxy.isConnected());
     assertEquals(readerA_Host, proxy.currentHost);
@@ -709,7 +722,8 @@ public class ClusterAwareConnectionProxyTest {
             mockConnectionProvider,
             mockTopologyService,
             Mockito.mock(WriterFailoverHandler.class),
-            Mockito.mock(ReaderFailoverHandler.class));
+            Mockito.mock(ReaderFailoverHandler.class),
+            new RdsDnsAnalyzer());
 
     assertTrue(proxy.isConnected());
     assertEquals(actualWriterHost, proxy.currentHost);
@@ -753,7 +767,8 @@ public class ClusterAwareConnectionProxyTest {
             mockConnectionProvider,
             mockTopologyService,
             Mockito.mock(WriterFailoverHandler.class),
-            Mockito.mock(ReaderFailoverHandler.class));
+            Mockito.mock(ReaderFailoverHandler.class),
+            new RdsDnsAnalyzer());
     assertTrue(proxy.isConnected());
     // Current host can't be determined when using reader cluster endpoint
     assertNull(proxy.currentHost);

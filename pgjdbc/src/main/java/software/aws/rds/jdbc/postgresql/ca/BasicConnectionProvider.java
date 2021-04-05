@@ -36,7 +36,7 @@ public class BasicConnectionProvider implements ConnectionProvider {
     if (url == null) {
       return new PgConnection(new HostSpec[] { hostSpec }, user(props), database(props), props, "");
     } else {
-      return new PgConnection(new HostSpec[]{hostSpec}, user(props), database(props), props, url);
+      return new PgConnection(new HostSpec[] { hostSpec }, user(props), database(props), props, url);
     }
   }
 

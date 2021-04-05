@@ -25,8 +25,7 @@ public interface ReaderFailoverHandler {
    * @param hosts       Cluster current topology.
    * @param currentHost The currently connected host that has failed.
    *
-   * @return {@link ReaderFailoverResult} The results of this process. May return null, which is
-   *     considered an unsuccessful result.
+   * @return {@link ReaderFailoverResult} The results of this process.
    * @throws SQLException if an error occurs
    */
   ReaderFailoverResult failover(List<HostInfo> hosts, @Nullable HostInfo currentHost) throws SQLException;

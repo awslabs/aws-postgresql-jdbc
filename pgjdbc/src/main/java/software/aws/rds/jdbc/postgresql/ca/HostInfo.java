@@ -161,9 +161,7 @@ public class HostInfo {
    */
   @Override
   public String toString() {
-    StringBuilder asStr = new StringBuilder(super.toString());
-    asStr.append(String.format(" :: {host: \"%s\", port: %d, isWriter: %b}", this.getHost(), this.getPort(), this.isWriter()));
-    return asStr.toString();
+    return super.toString() + String.format(" :: {host: \"%s\", port: %d, isWriter: %b}", this.getHost(), this.getPort(), this.isWriter());
   }
 
 }
