@@ -200,7 +200,6 @@ public class AuroraTopologyService implements TopologyService {
   private List<HostInfo> processQueryResults(ResultSet resultSet) throws SQLException {
     int writerCount = 0;
     List<HostInfo> hosts = new ArrayList<>();
-    hosts.add(new HostInfo("?", null, HostInfo.NO_PORT, false)); // reserve space for a writer node
 
     while (resultSet.next()) {
       if (!WRITER_SESSION_ID.equalsIgnoreCase(resultSet.getString(SESSION_ID_COL))) {
@@ -210,7 +209,7 @@ public class AuroraTopologyService implements TopologyService {
 
       if (writerCount == 0) {
         // store the first writer to its expected position [0]
-        hosts.set(WRITER_CONNECTION_INDEX, createHost(resultSet));
+        hosts.add(WRITER_CONNECTION_INDEX, createHost(resultSet));
       } else {
         // during failover, there could temporarily be two writers. Because we sorted by the last
         // updated timestamp, this host should be the obsolete writer, and it is about to become a reader
