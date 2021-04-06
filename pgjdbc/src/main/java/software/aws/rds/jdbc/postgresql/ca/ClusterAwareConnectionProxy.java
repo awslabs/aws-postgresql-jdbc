@@ -6,7 +6,6 @@
 
 package software.aws.rds.jdbc.postgresql.ca;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
 import software.aws.rds.jdbc.postgresql.ca.metrics.ClusterAwareMetrics;
 
 import org.checkerframework.checker.initialization.qual.UnderInitialization;

@@ -63,7 +63,7 @@ public class WriterFailoverResult {
    * @return List of hosts that represent the latest topology. Returns null if no connection is
    *     established.
    */
-  public @Nullable List<HostInfo> getTopology() {
+  public List<HostInfo> getTopology() {
     return this.topology;
   }
 

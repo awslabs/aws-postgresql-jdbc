@@ -99,7 +99,7 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
   @Override
   public ReaderFailoverResult failover(List<HostInfo> hosts, @Nullable HostInfo currentHost)
           throws SQLException {
-    if(hosts.isEmpty()) {
+    if (hosts.isEmpty()) {
       LOGGER.log(Level.FINE, "[ClusterAwareReaderFailoverHandler] failover was called with an invalid (empty) topology");
       return new ReaderFailoverResult(null, null, false);
     }
@@ -253,7 +253,7 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
    */
   @Override
   public ReaderFailoverResult getReaderConnection(List<HostInfo> hostList) throws SQLException {
-    if(hostList.isEmpty()) {
+    if (hostList.isEmpty()) {
       LOGGER.log(Level.FINE, "[ClusterAwareReaderFailoverHandler] getReaderConnection was called with an invalid (empty) topology");
       return new ReaderFailoverResult(null, null, false);
     }

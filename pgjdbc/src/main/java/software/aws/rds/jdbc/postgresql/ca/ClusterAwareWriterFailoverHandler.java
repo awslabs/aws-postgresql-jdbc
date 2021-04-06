@@ -98,7 +98,7 @@ public class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
    */
   @Override
   public WriterFailoverResult failover(List<HostInfo> currentTopology) throws SQLException {
-    if(currentTopology.isEmpty()) {
+    if (currentTopology.isEmpty()) {
       LOGGER.log(Level.FINE, "[ClusterAwareWriterFailoverHandler] failover was called with an invalid (empty) topology");
       return new WriterFailoverResult(false, false, new ArrayList<>(), null);
     }
