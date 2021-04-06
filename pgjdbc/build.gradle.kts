@@ -5,7 +5,6 @@
 
 import aQute.bnd.gradle.Bundle
 import aQute.bnd.gradle.BundleTaskConvention
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.github.vlsi.gradle.dsl.configureEach
 import com.github.vlsi.gradle.gettext.GettextTask
 import com.github.vlsi.gradle.gettext.MsgAttribTask
@@ -178,35 +177,23 @@ tasks.configureEach<Jar> {
     }
 }
 
-tasks.register<ShadowJar>("jdbcShadowJar") {
-    dependsOn("jar")
-    archiveClassifier.set("tmp")
-
-    from(tasks.jar.map { zipTree(it.archiveFile) })
-    relocate("org.postgresql", "software.aws.rds.jdbc.postgresql.shading.org.postgresql")
-}
-
-tasks.register<Jar>("cleanJdbcShadowJar") {
-    dependsOn("jdbcShadowJar")
-    from(tasks.named<Jar>("jdbcShadowJar").map { zipTree(it.archiveFile) }) {
-        exclude("org/**")
-    }
-    doLast {
-        val tmpShadowJar = tasks.named<ShadowJar>("jdbcShadowJar").get().archiveFile.get().asFile
-        tmpShadowJar.deleteRecursively()
-    }
+tasks.jar {
+    archiveClassifier.set("original")
 }
 
 tasks.shadowJar {
-    dependsOn("cleanJdbcShadowJar")
     configurations = listOf(shaded)
-    exclude("META-INF/maven/**")
-    exclude("META-INF/LICENSE*")
-    exclude("META-INF/NOTICE*")
-    exclude("META-INF/THIRD-PARTY-LICENSES*")
+    dependsOn("jar")
+    archiveClassifier.set("tmp")
+    includeEmptyDirs = false
+
     into("META-INF") {
         dependencyLicenses(shadedLicenseFiles)
     }
+
+    exclude("META-INF/maven/**")
+    exclude("META-INF/LICENSE*")
+    exclude("META-INF/NOTICE*")
 
     relocate("org.postgresql", "software.aws.rds.jdbc.postgresql.shading.org.postgresql") {
         exclude("org.postgresql.osgi.*")
@@ -214,9 +201,31 @@ tasks.shadowJar {
     relocate("com.ongres", "software.aws.rds.jdbc.postgresql.shading.com.ongres")
 }
 
+tasks.register<Jar>("cleanShadowJar") {
+    dependsOn("shadowJar")
+    includeEmptyDirs = false
+
+    val shadowJar = tasks.shadowJar.get().archiveFile.get().asFile
+    from(zipTree(shadowJar)) {
+        include("META-INF/**")
+        include("org/postgresql/osgi/**")
+        include("software/**")
+    }
+
+    doLast {
+        shadowJar.deleteRecursively()
+        val originalJar = tasks.jar.get().archiveFile.get().asFile
+        originalJar.deleteRecursively()
+    }
+}
+
+tasks.assemble {
+    dependsOn("cleanShadowJar")
+}
+
 val osgiJar by tasks.registering(Bundle::class) {
     archiveClassifier.set("osgi")
-    from(tasks.shadowJar.map { zipTree(it.archiveFile) })
+    from(tasks.named<Jar>("cleanShadowJar").map { zipTree(it.archiveFile) })
     withConvention(BundleTaskConvention::class) {
         bnd(
             """
@@ -312,6 +321,7 @@ val sourceDistribution by tasks.registering(Tar::class) {
         include("build.properties")
         include("ssltest.properties")
         include("LICENSE")
+        include("THIRD-PARTY-LICENSES")
         include("README.md")
     }
 
@@ -319,9 +329,6 @@ val sourceDistribution by tasks.registering(Tar::class) {
         "pgjdbc.version",
         "junit4.version",
         "junit5.version",
-        "commons-dbcp2.version",
-        "aws-java-sdk-rds.version",
-        "mockito-core.version",
         "classloader-leak-test-framework.version",
         "com.ongres.scram.client.version"
     ).associate { propertyName ->
@@ -354,7 +361,6 @@ val sourceDistribution by tasks.registering(Tar::class) {
         }
         from("$withoutAnnotations/src/main") {
             exclude("resources/META-INF/LICENSE")
-            exclude("resources/META-INF/THIRD-PARTY-LICENSES")
             exclude("checkstyle")
             exclude("*/org/postgresql/osgi/**")
             exclude("*/org/postgresql/sspi/NTDSAPI.java")
