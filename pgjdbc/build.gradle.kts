@@ -329,6 +329,9 @@ val sourceDistribution by tasks.registering(Tar::class) {
         "pgjdbc.version",
         "junit4.version",
         "junit5.version",
+        "commons-dbcp2.version",
+        "aws-java-sdk-rds.version",
+        "mockito-core.version",
         "classloader-leak-test-framework.version",
         "com.ongres.scram.client.version"
     ).associate { propertyName ->
