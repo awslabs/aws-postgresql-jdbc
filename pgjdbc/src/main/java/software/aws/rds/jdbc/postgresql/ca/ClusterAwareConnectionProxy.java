@@ -624,7 +624,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
                                          boolean connectedUsingCachedTopology) {
     if (this.currentConnection != null) {
       List<HostInfo> topology = this.topologyService.getTopology(this.currentConnection, false);
-      this.hosts = topology == null ? this.hosts : topology;
+      this.hosts = topology.isEmpty() ? this.hosts : topology;
     }
     this.isClusterTopologyAvailable = !this.hosts.isEmpty();
     LOGGER.log(Level.FINER,
@@ -979,18 +979,11 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       return;
     }
 
-    if (failoverResult.isNewHost()) {
-      // connected to a new writer host; refresh the topology
-      List<HostInfo> topology = failoverResult.getTopology();
-      if (topology != null) {
-        this.hosts = topology;
-      }
-    }
-
     if (this.gatherPerfMetricsSetting) {
       this.metrics.registerFailoverConnects(true);
     }
 
+    this.hosts = failoverResult.getTopology();
     this.currentHost = this.hosts.get(WRITER_CONNECTION_INDEX);
     this.currentConnection = failoverResult.getNewConnection();
     LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Connected to: {0}", this.currentHost);
@@ -1034,20 +1027,20 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       this.failoverStartTimeMs = 0;
     }
 
-    if (result == null || !result.isConnected()) {
+    if (!result.isConnected()) {
       processFailoverFailureAndThrowException("Unable to establish a read-only connection");
       return;
     }
 
-    this.currentConnection = result.getConnection();
-    this.currentHost = result.getHost();
-    updateTopologyAndConnectIfNeeded(true);
-    topologyService.setLastUsedReaderHost(this.currentHost);
-    LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Connected to: {0}", this.currentHost);
-
     if (this.gatherPerfMetricsSetting) {
       this.metrics.registerFailoverConnects(true);
     }
+
+    updateTopologyAndConnectIfNeeded(true);
+    this.currentHost = result.getHost();
+    this.currentConnection = result.getConnection();
+    topologyService.setLastUsedReaderHost(this.currentHost);
+    LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Connected to: {0}", this.currentHost);
   }
 
   /**

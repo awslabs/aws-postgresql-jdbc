@@ -130,10 +130,10 @@ public class AuroraTopologyService implements TopologyService {
    * @param forceUpdate If true, it forces a service to ignore cached copy of topology and to fetch
    *     a fresh one.
    * @return A list of hosts that describes cluster topology. A writer is always at position 0.
-   *     Returns null if topology isn't available.
+   *     Returns an empty list if topology isn't available or is invalid (doesn't contain a writer).
    */
   @Override
-  public @Nullable List<HostInfo> getTopology(Connection conn, boolean forceUpdate) {
+  public List<HostInfo> getTopology(Connection conn, boolean forceUpdate) {
     ClusterTopologyInfo clusterTopologyInfo = topologyCache.get(this.clusterId);
 
     if (clusterTopologyInfo == null
@@ -146,7 +146,7 @@ public class AuroraTopologyService implements TopologyService {
       if (!latestTopologyInfo.hosts.isEmpty()) {
         clusterTopologyInfo = updateCache(clusterTopologyInfo, latestTopologyInfo);
       } else {
-        return (clusterTopologyInfo == null || forceUpdate) ? null : clusterTopologyInfo.hosts;
+        return (clusterTopologyInfo == null || forceUpdate) ? new ArrayList<>() : clusterTopologyInfo.hosts;
       }
     }
 

@@ -90,7 +90,7 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
    * reader is available then driver may also try to connect to a writer host, down hosts, and the
    * current reader host.
    *
-   * @param hosts       The latest cluster topology information that we had before connection failure
+   * @param hosts       The latest cluster topology information that we had before connection failure.
    * @param currentHost The currently connected host that has failed.
    *
    * @return {@link ReaderFailoverResult} The results of this process.
@@ -99,6 +99,11 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
   @Override
   public ReaderFailoverResult failover(List<HostInfo> hosts, @Nullable HostInfo currentHost)
           throws SQLException {
+    if(hosts.isEmpty()) {
+      LOGGER.log(Level.FINE, "[ClusterAwareReaderFailoverHandler] failover was called with an invalid (empty) topology");
+      return new ReaderFailoverResult(null, null, false);
+    }
+
     ExecutorService executor = Executors.newSingleThreadExecutor();
     Future<ReaderFailoverResult> future = submitInternalFailoverTask(hosts, currentHost, executor);
     return getInternalFailoverResult(executor, future);
@@ -241,13 +246,18 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
    * Called to get any available reader connection. If no reader is available then result of process
    * is unsuccessful. This process will not attempt to connect to the writer host.
    *
-   * @param hostList Cluster current topology.
+   * @param hostList Current topology for the cluster.
    *
    * @return {@link ReaderFailoverResult} The results of this process.
    * @throws SQLException when a thread gets interrupted and failover fails
    */
   @Override
   public ReaderFailoverResult getReaderConnection(List<HostInfo> hostList) throws SQLException {
+    if(hostList.isEmpty()) {
+      LOGGER.log(Level.FINE, "[ClusterAwareReaderFailoverHandler] getReaderConnection was called with an invalid (empty) topology");
+      return new ReaderFailoverResult(null, null, false);
+    }
+
     Set<String> downHosts = topologyService.getDownHosts();
     List<HostInfo> readerHosts = getReaderHostsByPriority(hostList, downHosts);
     return getConnectionFromHostList(readerHosts);

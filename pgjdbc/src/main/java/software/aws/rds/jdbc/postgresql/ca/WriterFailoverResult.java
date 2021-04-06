@@ -16,7 +16,7 @@ import java.util.List;
 public class WriterFailoverResult {
   private final boolean isConnected;
   private final boolean isNewHost;
-  private final @Nullable List<HostInfo> topology;
+  private final List<HostInfo> topology;
   private final @Nullable BaseConnection newConnection;
 
   /**
@@ -30,7 +30,7 @@ public class WriterFailoverResult {
   public WriterFailoverResult(
       boolean isConnected,
       boolean isNewHost,
-      @Nullable List<HostInfo> topology,
+      List<HostInfo> topology,
       @Nullable BaseConnection newConnection) {
     this.isConnected = isConnected;
     this.isNewHost = isNewHost;

@@ -93,11 +93,16 @@ public class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
   /**
    * Called to start Writer Failover Process.
    *
-   * @param currentTopology Current topology for the cluster. This method assumes currentTopology is non-null and non-empty
+   * @param currentTopology Current topology for the cluster.
    * @return {@link WriterFailoverResult} The results of this process.
    */
   @Override
   public WriterFailoverResult failover(List<HostInfo> currentTopology) throws SQLException {
+    if(currentTopology.isEmpty()) {
+      LOGGER.log(Level.FINE, "[ClusterAwareWriterFailoverHandler] failover was called with an invalid (empty) topology");
+      return new WriterFailoverResult(false, false, new ArrayList<>(), null);
+    }
+
     ExecutorService executorService = Executors.newFixedThreadPool(2);
     CompletionService<WriterFailoverResult> completionService =
             new ExecutorCompletionService<>(executorService);
@@ -232,8 +237,8 @@ public class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
             BaseConnection conn = connectionProvider.connect(this.originalWriterHost.toHostSpec(),
                     connectionProps, this.originalWriterHost.getUrl(connectionProps));
 
-            @Nullable List<HostInfo> latestTopology = topologyService.getTopology(conn, true);
-            if (latestTopology != null && !latestTopology.isEmpty() && isCurrentHostWriter(latestTopology)) {
+            List<HostInfo> latestTopology = topologyService.getTopology(conn, true);
+            if (!latestTopology.isEmpty() && isCurrentHostWriter(latestTopology)) {
               topologyService.removeFromDownHostList(this.originalWriterHost);
               return new WriterFailoverResult(true, false, latestTopology, conn);
             }
@@ -358,21 +363,12 @@ public class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
     private boolean refreshTopologyAndConnectToNewWriter() throws InterruptedException {
       while (this.currentReaderConnection != null) {
         List<HostInfo> topology = topologyService.getTopology(this.currentReaderConnection, true);
-        if (topology == null) {
-          // topology couldn't be obtained; there may be issues with the reader connection
-          return false;
-        }
-
-        this.currentTopology = topology;
-        if (!this.currentTopology.isEmpty()) {
+        if (!topology.isEmpty()) {
+          this.currentTopology = topology;
           logTopology();
-          if (this.currentTopology == null) {
-            return false;
-          }
           HostInfo writerCandidate = this.currentTopology.get(WRITER_CONNECTION_INDEX);
 
-          if (writerCandidate != null && (this.originalWriterHost == null
-                  || !isSame(writerCandidate, this.originalWriterHost))) {
+          if (this.originalWriterHost == null || !isSame(writerCandidate, this.originalWriterHost)) {
             // the new writer is available and it's different from the previous writer
             if (connectToWriter(writerCandidate)) {
               return true;
