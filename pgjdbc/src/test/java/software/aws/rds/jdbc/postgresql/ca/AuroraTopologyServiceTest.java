@@ -183,7 +183,7 @@ public class AuroraTopologyServiceTest {
     when(mockConn.createStatement()).thenThrow(SQLException.class);
 
     final List<HostInfo> hosts = spyProvider.getTopology(mockConn, true);
-    assertNull(hosts);
+    assertTrue(hosts.isEmpty());
   }
 
   @Test

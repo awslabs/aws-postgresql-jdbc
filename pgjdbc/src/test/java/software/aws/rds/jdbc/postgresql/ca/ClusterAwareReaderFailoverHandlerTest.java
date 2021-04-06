@@ -148,7 +148,7 @@ public class ClusterAwareReaderFailoverHandlerTest {
   }
 
   @Test
-  public void testFailover_nullOrEmptyHostList() throws SQLException {
+  public void testFailover_emptyHostList() throws SQLException {
     final TopologyService mockTopologyService = Mockito.mock(TopologyService.class);
     final ClusterAwareReaderFailoverHandler target =
         new ClusterAwareReaderFailoverHandler(
@@ -160,8 +160,6 @@ public class ClusterAwareReaderFailoverHandlerTest {
     assertFalse(result.isConnected());
     assertNull(result.getConnection());
     assertNull(result.getHost());
-
-    verify(mockTopologyService, atLeast(1)).addToDownHostList(eq(currentHost));
   }
 
   @Test
