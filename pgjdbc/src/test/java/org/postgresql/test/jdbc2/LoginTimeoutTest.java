@@ -19,6 +19,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
@@ -139,6 +140,11 @@ public class LoginTimeoutTest {
 
     try {
       String url = "jdbc:postgresql://" + helper.getHost() + ":" + helper.getPort() + "/dummy";
+      Driver registeredDriver = DriverManager.getDriver(url);
+      if(registeredDriver instanceof software.aws.rds.jdbc.postgresql.Driver) {
+        DriverManager.deregisterDriver(registeredDriver);
+      }
+
       Properties props = new Properties();
       props.setProperty("user", "dummy");
       props.setProperty("loginTimeout", "5");
