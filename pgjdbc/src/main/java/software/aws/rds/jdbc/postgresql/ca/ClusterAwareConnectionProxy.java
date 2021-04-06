@@ -6,6 +6,7 @@
 
 package software.aws.rds.jdbc.postgresql.ca;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
 import software.aws.rds.jdbc.postgresql.ca.metrics.ClusterAwareMetrics;
 
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
@@ -686,6 +687,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    *
    * @return true if cluster-aware failover is enabled
    */
+  @RequiresNonNull("this.hosts")
   public synchronized boolean isFailoverEnabled(@UnknownInitialization ClusterAwareConnectionProxy this) {
     return this.enableFailoverSetting
             && !this.isRdsProxy
@@ -751,7 +753,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       return;
     }
 
-    if(!isFailoverEnabled()) {
+    if (!isFailoverEnabled()) {
       LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Invalid call to pickNewConnection - failover is not enabled");
       return;
     }
@@ -913,7 +915,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    */
   @RequiresNonNull({"this.topologyService", "this.initialConnectionProps", "this.readerFailoverHandler", "this.writerFailoverHandler", "this.metrics", "this.connectionProvider", "this.hosts"})
   protected synchronized void failover(@UnknownInitialization ClusterAwareConnectionProxy this) throws SQLException {
-    if(!isFailoverEnabled()) {
+    if (!isFailoverEnabled()) {
       LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Invalid call to failover - failover is not enabled");
       return;
     }
@@ -958,7 +960,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    */
   @RequiresNonNull({"this.topologyService", "this.initialConnectionProps", "this.writerFailoverHandler", "this.metrics", "this.hosts"})
   protected void failoverWriter(@UnknownInitialization ClusterAwareConnectionProxy this) throws SQLException {
-    if(!isFailoverEnabled()) {
+    if (!isFailoverEnabled()) {
       LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Invalid call to failoverWriter - failover is not enabled");
       return;
     }
@@ -1018,7 +1020,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    */
   @RequiresNonNull({"this.topologyService", "this.initialConnectionProps", "this.readerFailoverHandler", "this.metrics", "this.writerFailoverHandler", "this.connectionProvider", "this.hosts"})
   protected void failoverReader(@UnknownInitialization ClusterAwareConnectionProxy this) throws SQLException {
-    if(!isFailoverEnabled()) {
+    if (!isFailoverEnabled()) {
       LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Invalid call to failoverReader - failover is not enabled");
       return;
     }
@@ -1418,7 +1420,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       return;
     }
 
-    if(!isFailoverEnabled()) {
+    if (!isFailoverEnabled()) {
       LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] setReadOnly(false) was called while connected to a reader "
               + "instance, and the driver cannot automatically reconnect to a writer instance because failover is disabled");
     }

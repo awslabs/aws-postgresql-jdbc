@@ -218,7 +218,7 @@ public class AuroraTopologyService implements TopologyService {
       writerCount++;
     }
 
-    if(writerCount == 0) {
+    if (writerCount == 0) {
       LOGGER.log(Level.SEVERE, "The topology query returned an invalid topology - no writer instance detected");
       return new ArrayList<>();
     }
