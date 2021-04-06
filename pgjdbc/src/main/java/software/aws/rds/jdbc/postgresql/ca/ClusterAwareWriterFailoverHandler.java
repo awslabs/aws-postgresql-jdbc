@@ -93,7 +93,7 @@ public class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
   /**
    * Called to start Writer Failover Process.
    *
-   * @param currentTopology Cluster current topology
+   * @param currentTopology Current topology for the cluster. This method assumes currentTopology is non-null and non-empty
    * @return {@link WriterFailoverResult} The results of this process.
    */
   @Override
@@ -101,8 +101,9 @@ public class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
     ExecutorService executorService = Executors.newFixedThreadPool(2);
     CompletionService<WriterFailoverResult> completionService =
             new ExecutorCompletionService<>(executorService);
+    submitTasks(currentTopology, executorService, completionService);
     try {
-      for (int numTasks = submitTasks(currentTopology, executorService, completionService); numTasks > 0; numTasks--) {
+      for (int numTasks = 2; numTasks > 0; numTasks--) {
         WriterFailoverResult result = getNextResult(executorService, completionService);
         if (result.isConnected()) {
           return result;
@@ -120,31 +121,20 @@ public class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
 
   /**
    * Mark the failed writer as down and submit one task to attempt reconnection to the same writer
-   * host and another to check for a new writer host and connect if applicable. If the relevant
-   * topology info one of the tasks is not valid, the task will not be submitted. This should only
-   * happen very rarely, if at all.
+   * host and another to check for a new writer host.
    *
    * @param currentTopology The latest topology information from before the connection failed
    * @param executorService The {@link ExecutorService} that manages the task execution, which will
    *                        be closed at the end of this method to prevent more task submissions
    * @param completionService The {@link CompletionService} to submit the tasks to
-   * @return The number of tasks that were registered
    */
-  private int submitTasks(List<HostInfo> currentTopology, ExecutorService executorService,
+  private void submitTasks(List<HostInfo> currentTopology, ExecutorService executorService,
                           CompletionService<WriterFailoverResult> completionService) {
-    int numTasks = 0;
     HostInfo writerHost = currentTopology.get(WRITER_CONNECTION_INDEX);
     this.topologyService.addToDownHostList(writerHost);
-    if (writerHost != null) {
-      completionService.submit(new ReconnectToWriterHandler(writerHost));
-      numTasks++;
-    }
-    if (!currentTopology.isEmpty()) {
-      completionService.submit(new WaitForNewWriterHandler(currentTopology, writerHost));
-      numTasks++;
-    }
+    completionService.submit(new ReconnectToWriterHandler(writerHost));
+    completionService.submit(new WaitForNewWriterHandler(currentTopology, writerHost));
     executorService.shutdown();
-    return numTasks;
   }
 
   /**
@@ -189,7 +179,7 @@ public class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
    */
   private void logTaskSuccess(WriterFailoverResult result) {
     @Nullable List<HostInfo> topology = result.getTopology();
-    if (topology == null) {
+    if (topology == null || topology.isEmpty()) {
       String taskId = result.isNewHost() ? "TaskB" : "TaskA";
       LOGGER.log(Level.SEVERE, "[ClusterAwareWriterFailoverHandler] " + taskId
               + " successfully established a connection but doesn't contain a valid topology");
