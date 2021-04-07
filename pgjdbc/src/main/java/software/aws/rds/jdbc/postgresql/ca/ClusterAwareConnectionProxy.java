@@ -625,6 +625,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       List<HostInfo> topology = this.topologyService.getTopology(this.currentConnection, false);
       this.hosts = topology.isEmpty() ? this.hosts : topology;
     }
+
     this.isClusterTopologyAvailable = !this.hosts.isEmpty();
     LOGGER.log(Level.FINER,
             "[ClusterAwareConnectionProxy] isClusterTopologyAvailable={0}", this.isClusterTopologyAvailable);
@@ -1414,7 +1415,8 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
 
     if (!isFailoverEnabled()) {
       LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] setReadOnly(false) was called while connected to a reader "
-              + "instance, and the driver cannot automatically reconnect to a writer instance because failover is disabled");
+              + "instance, but the driver cannot automatically reconnect to a writer instance because failover is disabled");
+      return;
     }
 
     try {

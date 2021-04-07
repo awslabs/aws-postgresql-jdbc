@@ -144,7 +144,7 @@ public class AuroraTopologyService implements TopologyService {
       ClusterTopologyInfo latestTopologyInfo = queryForTopology(conn);
 
       if (!latestTopologyInfo.hosts.isEmpty()) {
-        clusterTopologyInfo = updateCache(clusterTopologyInfo, latestTopologyInfo);
+        clusterTopologyInfo = updateCache(latestTopologyInfo);
       } else {
         return (clusterTopologyInfo == null || forceUpdate) ? new ArrayList<>() : clusterTopologyInfo.hosts;
       }
@@ -195,7 +195,8 @@ public class AuroraTopologyService implements TopologyService {
    * Form a list of hosts from the results of the topology query
    *
    * @param resultSet The results of the topology query
-   * @return A list of {@link HostInfo} objects representing the topology that was returned by the topology query
+   * @return A list of {@link HostInfo} objects representing the topology that was returned by the topology query. The
+   *         list will be empty if the topology query returned an invalid topology (no writer instance).
    */
   private List<HostInfo> processQueryResults(ResultSet resultSet) throws SQLException {
     int writerCount = 0;
@@ -219,7 +220,7 @@ public class AuroraTopologyService implements TopologyService {
     }
 
     if (writerCount == 0) {
-      LOGGER.log(Level.SEVERE, "The topology query returned an invalid topology - no writer instance detected");
+      LOGGER.log(Level.SEVERE, "[AuroraTopologyService] The topology query returned an invalid topology - no writer instance detected");
       return new ArrayList<>();
     }
     return hosts;
@@ -267,28 +268,17 @@ public class AuroraTopologyService implements TopologyService {
   }
 
   /**
-   * Store the information for the topology in the cache, creating the information object if it did not previously exist
-   * in the cache.
+   * Store the latest information about the topology in the cache.
    *
-   * @param clusterTopologyInfo The cluster topology info that existed in the cache before the topology query. This
-   *          parameter will be null if no topology info for the cluster has been created in the cache yet.
    * @param latestTopologyInfo The results of the current topology query
    * @return The {@link ClusterTopologyInfo} stored in the cache by this method, representing the most up-to-date
    *         information we have about the topology.
    */
-  private ClusterTopologyInfo updateCache(@Nullable ClusterTopologyInfo clusterTopologyInfo, ClusterTopologyInfo latestTopologyInfo) {
-    if (clusterTopologyInfo == null) {
-      clusterTopologyInfo = new ClusterTopologyInfo(latestTopologyInfo.hosts, new HashSet<>(), null, Instant.now());
-    } else {
-      clusterTopologyInfo.hosts = latestTopologyInfo.hosts;
-      clusterTopologyInfo.lastUpdated = Instant.now();
-      clusterTopologyInfo.downHosts = new HashSet<>();
-    }
-
+  private ClusterTopologyInfo updateCache(ClusterTopologyInfo latestTopologyInfo) {
     synchronized (cacheLock) {
-      topologyCache.put(this.clusterId, clusterTopologyInfo);
+      topologyCache.put(this.clusterId, latestTopologyInfo);
+      return latestTopologyInfo;
     }
-    return clusterTopologyInfo;
   }
 
 
@@ -353,15 +343,12 @@ public class AuroraTopologyService implements TopologyService {
    */
   @Override
   public void addToDownHostList(@Nullable HostInfo downHost) {
-    if (downHost == null) {
+    if (downHost == null || topologyCache.get(this.clusterId) == null) {
       return;
     }
+
     synchronized (cacheLock) {
       ClusterTopologyInfo clusterTopologyInfo = topologyCache.get(this.clusterId);
-      if (clusterTopologyInfo == null) {
-        clusterTopologyInfo = new ClusterTopologyInfo(new ArrayList<>(), new HashSet<>(), null, Instant.now());
-        topologyCache.put(this.clusterId, clusterTopologyInfo);
-      }
       clusterTopologyInfo.downHosts.add(downHost.getHostPortPair());
     }
   }
