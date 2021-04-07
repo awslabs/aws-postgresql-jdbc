@@ -267,7 +267,6 @@ public class AuroraTopologyService implements TopologyService {
 
   }
 
-
   /**
    * Store the information for the topology in the cache, creating the information object if it did not previously exist
    * in the cache
