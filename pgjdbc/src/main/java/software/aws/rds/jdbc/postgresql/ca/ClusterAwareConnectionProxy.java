@@ -687,12 +687,10 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    *
    * @return true if cluster-aware failover is enabled
    */
-  @RequiresNonNull("this.hosts")
   public synchronized boolean isFailoverEnabled(@UnknownInitialization ClusterAwareConnectionProxy this) {
     return this.enableFailoverSetting
             && !this.isRdsProxy
-            && this.isClusterTopologyAvailable
-            && !this.hosts.isEmpty();
+            && this.isClusterTopologyAvailable;
   }
 
   /**
@@ -753,8 +751,8 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       return;
     }
 
-    if (!isFailoverEnabled()) {
-      LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Invalid call to pickNewConnection - failover is not enabled");
+    if (this.hosts.isEmpty()) {
+      LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Cannot pick a new connection because the current host list is empty");
       return;
     }
 
@@ -915,11 +913,6 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    */
   @RequiresNonNull({"this.topologyService", "this.initialConnectionProps", "this.readerFailoverHandler", "this.writerFailoverHandler", "this.metrics", "this.connectionProvider", "this.hosts"})
   protected synchronized void failover(@UnknownInitialization ClusterAwareConnectionProxy this) throws SQLException {
-    if (!isFailoverEnabled()) {
-      LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Invalid call to failover - failover is not enabled");
-      return;
-    }
-
     if (this.currentConnection != null) {
       this.inTransaction = this.currentConnection.getQueryExecutor().getTransactionState() != TransactionState.IDLE;
     }
@@ -960,11 +953,6 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    */
   @RequiresNonNull({"this.topologyService", "this.initialConnectionProps", "this.writerFailoverHandler", "this.metrics", "this.hosts"})
   protected void failoverWriter(@UnknownInitialization ClusterAwareConnectionProxy this) throws SQLException {
-    if (!isFailoverEnabled()) {
-      LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Invalid call to failoverWriter - failover is not enabled");
-      return;
-    }
-
     LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Starting writer failover procedure.");
     WriterFailoverResult failoverResult = this.writerFailoverHandler.failover(this.hosts);
 
@@ -983,7 +971,10 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       this.metrics.registerFailoverConnects(true);
     }
 
-    this.hosts = failoverResult.getTopology();
+    if (!failoverResult.getTopology().isEmpty()) {
+      this.hosts = failoverResult.getTopology();
+    }
+
     this.currentHost = this.hosts.get(WRITER_CONNECTION_INDEX);
     this.currentConnection = failoverResult.getNewConnection();
     LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Connected to: {0}", this.currentHost);
@@ -1013,11 +1004,6 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    */
   @RequiresNonNull({"this.topologyService", "this.initialConnectionProps", "this.readerFailoverHandler", "this.metrics", "this.writerFailoverHandler", "this.connectionProvider", "this.hosts"})
   protected void failoverReader(@UnknownInitialization ClusterAwareConnectionProxy this) throws SQLException {
-    if (!isFailoverEnabled()) {
-      LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Invalid call to failoverReader - failover is not enabled");
-      return;
-    }
-
     LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Starting reader failover procedure.");
     ReaderFailoverResult result = readerFailoverHandler.failover(this.hosts, this.currentHost);
 
@@ -1065,6 +1051,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
     if (this.currentConnection != null) {
       latestTopology = this.topologyService.getTopology(this.currentConnection, forceUpdate);
     }
+
     if (latestTopology == null || latestTopology.isEmpty()) {
       return;
     }
@@ -1409,13 +1396,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    * @throws SQLException if {@link #failover()} is invoked
    */
   private void connectToWriterIfRequired(boolean originalReadOnlyValue, boolean newReadOnlyValue) throws SQLException {
-    if (!originalReadOnlyValue || newReadOnlyValue || (this.currentHost != null && this.currentHost.isWriter())) {
-      return;
-    }
-
-    if (!isFailoverEnabled()) {
-      LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] setReadOnly(false) was called while connected to a reader "
-              + "instance, but the driver cannot automatically reconnect to a writer instance because failover is disabled");
+    if (!shouldReconnectToWriter(originalReadOnlyValue, newReadOnlyValue) || this.hosts.isEmpty()) {
       return;
     }
 
@@ -1427,6 +1408,18 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       }
       failover();
     }
+  }
+
+  /**
+   * Checks if the connection needs to be switched to a writer connection when setReadOnly(false) is called. This should
+   * only be true the read only value was switched from true to false and we aren't connected to a writer.
+   *
+   * @param originalReadOnlyValue Original value of read only
+   * @param newReadOnlyValue The new value of read only
+   * @return If the connection should reconnect to the writer instance according to the setReadOnly call
+   */
+  private boolean shouldReconnectToWriter(boolean originalReadOnlyValue, boolean newReadOnlyValue) {
+    return originalReadOnlyValue && !newReadOnlyValue && (this.currentHost == null || !this.currentHost.isWriter());
   }
 
   /**

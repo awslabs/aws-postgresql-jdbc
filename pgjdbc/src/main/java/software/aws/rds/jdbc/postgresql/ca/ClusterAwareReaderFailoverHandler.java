@@ -114,6 +114,7 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
    *
    * @param hosts The latest cluster topology information that we had before connection failure
    * @param currentHost The currently connected host that has failed
+   * @param currentHost The currently connected host that has failed
    * @param executor The {@link ExecutorService} to submit the internal failover task to
    * @return the {@link Future} associated with the submitted internal failover task
    */
