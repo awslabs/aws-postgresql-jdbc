@@ -18,6 +18,7 @@ import org.postgresql.buildtools.JavaCommentPreprocessorTask
 
 plugins {
     publishing
+    signing
     // Verification
     checkstyle
     jacoco
@@ -585,114 +586,46 @@ allprojects {
             }
         }
 
-        configure<PublishingExtension> {
-            if (!project.props.bool("nexus.publish", default = true)) {
-                // Some of the artifacts do not need to be published
-                return@configure
-            }
-
+        publishing {
             publications {
-                // <editor-fold defaultstate="collapsed" desc="Override published artifacts (e.g. shaded instead of regular)">
                 val extraMavenPublications by configurations.creating {
                     isVisible = false
                     isCanBeResolved = false
                     isCanBeConsumed = false
                 }
-                afterEvaluate {
-                    named<MavenPublication>(project.name) {
-                        extraMavenPublications.outgoing.artifacts.apply {
-                            val keys = mapTo(HashSet()) {
-                                it.classifier.orEmpty() to it.extension
-                            }
-                            artifacts.removeIf {
-                                keys.contains(it.classifier.orEmpty() to it.extension)
-                            }
-                            forEach { artifact(it) }
-                        }
-                    }
-                }
-                // </editor-fold>
-                // <editor-fold defaultstate="collapsed" desc="Configuration of the published pom.xml">
-                create<MavenPublication>(project.name) {
-                    artifactId = project.name
-                    version = rootProject.version.toString()
+
+                create<MavenPublication>("mavenPublication") {
+                    groupId = "software.aws.rds"
+                    artifactId = "aws-postgresql-jdbc"
+                    version = "0.1.0"
+
                     from(components["java"])
 
-                    // Gradle feature variants can't be mapped to Maven's pom
                     suppressAllPomMetadataWarnings()
 
-                    // Use the resolved versions in pom.xml
-                    // Gradle might have different resolution rules, so we set the versions
-                    // that were used in Gradle build/test.
-                    versionFromResolution()
                     pom {
-                        simplifyXml()
-                        name.set(
-                            (project.findProperty("artifact.name") as? String) ?: "pgdjbc ${project.name.capitalize()}"
-                        )
-                        description.set(project.description ?: "PostgreSQL JDBC Driver ${project.name.capitalize()}")
-                        inceptionYear.set("1997")
-                        url.set("https://jdbc.postgresql.org")
-                        licenses {
-                            license {
-                                name.set("BSD-2-Clause")
-                                url.set("https://jdbc.postgresql.org/about/license.html")
-                                comments.set("BSD-2-Clause, copyright PostgreSQL Global Development Group")
-                                distribution.set("repo")
-                            }
-                        }
-                        organization {
-                            name.set("PostgreSQL Global Development Group")
-                            url.set("https://jdbc.postgresql.org/")
-                        }
                         developers {
                             developer {
-                                id.set("davecramer")
-                                name.set("Dave Cramer")
-                            }
-                            developer {
-                                id.set("jurka")
-                                name.set("Kris Jurka")
-                            }
-                            developer {
-                                id.set("oliver")
-                                name.set("Oliver Jowett")
-                            }
-                            developer {
-                                id.set("ringerc")
-                                name.set("Craig Ringer")
-                            }
-                            developer {
-                                id.set("vlsi")
-                                name.set("Vladimir Sitnikov")
-                            }
-                            developer {
-                                id.set("bokken")
-                                name.set("Brett Okken")
+                                id.set("amazonwebservices")
+                                organization.set("Amazon Web Services")
+                                organizationUrl.set("https://aws.amazon.com")
+                                email.set("aws-rds-oss@amazon.com")
                             }
                         }
-                        issueManagement {
-                            system.set("GitHub issues")
-                            url.set("https://github.com/pgjdbc/pgjdbc/issues")
-                        }
-                        mailingLists {
-                            mailingList {
-                                name.set("PostgreSQL JDBC development list")
-                                subscribe.set("https://lists.postgresql.org/")
-                                unsubscribe.set("https://lists.postgresql.org/unsubscribe/")
-                                post.set("pgsql-jdbc@postgresql.org")
-                                archive.set("https://www.postgresql.org/list/pgsql-jdbc/")
-                            }
-                        }
+
                         scm {
-                            connection.set("scm:git:https://github.com/pgjdbc/pgjdbc.git")
-                            developerConnection.set("scm:git:https://github.com/pgjdbc/pgjdbc.git")
-                            url.set("https://github.com/pgjdbc/pgjdbc")
-                            tag.set("HEAD")
+                            connection.set("scm:git:https://github.com/awslabs/aws-postgresql-jdbc.git")
+                            developerConnection.set("scm:git@github.com:awslabs/aws-postgresql-jdbc.git")
+                            url.set("https://github.com/awslabs/aws-postgresql-jdbc")
                         }
                     }
                 }
-                // </editor-fold>
+            }
+
+            repositories {
+                maven {
+                    mavenLocal()
+                }
             }
         }
     }
