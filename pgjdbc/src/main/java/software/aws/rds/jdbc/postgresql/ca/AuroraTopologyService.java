@@ -282,9 +282,9 @@ public class AuroraTopologyService implements TopologyService {
       clusterTopologyInfo = latestTopologyInfo;
     } else {
       clusterTopologyInfo.hosts = latestTopologyInfo.hosts;
-      clusterTopologyInfo.lastUpdated = latestTopologyInfo.lastUpdated;
       clusterTopologyInfo.downHosts = latestTopologyInfo.downHosts;
     }
+    clusterTopologyInfo.lastUpdated = Instant.now();
 
     synchronized (cacheLock) {
       topologyCache.put(this.clusterId, clusterTopologyInfo);
