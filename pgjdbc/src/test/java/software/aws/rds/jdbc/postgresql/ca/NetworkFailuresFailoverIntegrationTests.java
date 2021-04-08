@@ -74,9 +74,7 @@ public class NetworkFailuresFailoverIntegrationTests extends FailoverIntegration
     FailoverSocketFactory.downHost(dbHostCluster);
     FailoverSocketFactory.downHost(String.format(dbHostInstancePattern, currentWriter));
 
-    SQLException exception = assertThrows(SQLException.class, () -> {
-      queryInstanceId(testConnection);
-    });
+    SQLException exception = assertThrows(SQLException.class, () -> queryInstanceId(testConnection));
 
     assertEquals("08001", exception.getSQLState());
 
@@ -107,9 +105,7 @@ public class NetworkFailuresFailoverIntegrationTests extends FailoverIntegration
     FailoverSocketFactory.downHost(dbHostClusterRo);
     FailoverSocketFactory.downHost(String.format(dbHostInstancePattern, currentReader));
 
-    SQLException exception = assertThrows(SQLException.class, () -> {
-      querySelect1(testConnection);
-    });
+    SQLException exception = assertThrows(SQLException.class, () -> querySelect1(testConnection));
     assertEquals("08S02", exception.getSQLState());
 
     String newReader = queryInstanceId(testConnection);
@@ -158,9 +154,7 @@ public class NetworkFailuresFailoverIntegrationTests extends FailoverIntegration
       }
     }
 
-    SQLException exception = assertThrows(SQLException.class, () -> {
-      querySelect1(testConnection);
-    });
+    SQLException exception = assertThrows(SQLException.class, () -> querySelect1(testConnection));
     assertEquals("08S02", exception.getSQLState());
 
     String newReader = queryInstanceId(testConnection);
@@ -190,7 +184,7 @@ public class NetworkFailuresFailoverIntegrationTests extends FailoverIntegration
     checkWriterConnection.close();
 
     final String[] allInstances = instanceIDs;
-    ArrayList<String> readers = new ArrayList<String>(Arrays.asList(allInstances));
+    ArrayList<String> readers = new ArrayList<>(Arrays.asList(allInstances));
     readers.remove(currentWriter);
     Collections.shuffle(readers);
     String anyReader = readers.get(0);
@@ -213,9 +207,7 @@ public class NetworkFailuresFailoverIntegrationTests extends FailoverIntegration
     // put down current reader
     FailoverSocketFactory.downHost(String.format(dbHostInstancePattern, currentReader));
 
-    SQLException exception = assertThrows(SQLException.class, () -> {
-      querySelect1(testConnection);
-    });
+    SQLException exception = assertThrows(SQLException.class, () -> querySelect1(testConnection));
     assertEquals("08S02", exception.getSQLState());
 
     String newInstance = queryInstanceId(testConnection);
@@ -245,7 +237,7 @@ public class NetworkFailuresFailoverIntegrationTests extends FailoverIntegration
     checkWriterConnection.close();
 
     final String[] allInstances = instanceIDs;
-    ArrayList<String> readers = new ArrayList<String>(Arrays.asList(allInstances));
+    ArrayList<String> readers = new ArrayList<>(Arrays.asList(allInstances));
     readers.remove(currentWriter);
     Collections.shuffle(readers);
     String anyReader = readers.get(0);
@@ -270,9 +262,7 @@ public class NetworkFailuresFailoverIntegrationTests extends FailoverIntegration
     // put down current reader
     FailoverSocketFactory.downHost(String.format(dbHostInstancePattern, currentReader));
 
-    SQLException exception = assertThrows(SQLException.class, () -> {
-      querySelect1(testConnection);
-    });
+    SQLException exception = assertThrows(SQLException.class, () -> querySelect1(testConnection));
     assertEquals("08S02", exception.getSQLState());
 
     String newInstance = queryInstanceId(testConnection);
