@@ -81,7 +81,7 @@ public class WriterFailoverIntegrationTest extends FailoverIntegrationTest {
   /** Current writer dies, no available reader instance, connection fails. */
   @Test
   public void test1_3_writerConnectionFailsDueToNoReader()
-      throws SQLException, InterruptedException {
+      throws SQLException {
     final String initalWriterId = instanceIDs[0];
 
     Properties props = new Properties();

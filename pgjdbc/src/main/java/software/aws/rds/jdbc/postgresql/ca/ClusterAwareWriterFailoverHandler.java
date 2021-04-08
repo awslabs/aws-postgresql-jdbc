@@ -298,12 +298,12 @@ public class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
    */
   private class WaitForNewWriterHandler implements Callable<WriterFailoverResult> {
     private @Nullable BaseConnection currentConnection = null;
-    private final HostInfo originalWriterHost;
+    private final @Nullable HostInfo originalWriterHost;
     private List<HostInfo> currentTopology;
     private @Nullable HostInfo currentReaderHost;
     private @Nullable BaseConnection currentReaderConnection;
 
-    WaitForNewWriterHandler(List<HostInfo> currentTopology, HostInfo originalWriterHost) {
+    WaitForNewWriterHandler(List<HostInfo> currentTopology, @Nullable HostInfo originalWriterHost) {
       this.currentTopology = currentTopology;
       this.originalWriterHost = originalWriterHost;
     }

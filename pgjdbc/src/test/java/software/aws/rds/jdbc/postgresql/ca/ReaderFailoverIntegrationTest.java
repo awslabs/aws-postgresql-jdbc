@@ -19,6 +19,7 @@ import org.postgresql.PGProperty;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -32,7 +33,7 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
 
   /** Current reader dies, the driver failover to another reader. */
   @Test
-  public void test2_1_failFromReaderToAnotherReader() throws SQLException, InterruptedException {
+  public void test2_1_failFromReaderToAnotherReader() throws SQLException {
     assertTrue(clusterSize >= 3, "Minimal cluster configuration: 1 writer + 2 readers");
 
     Properties props = new Properties();
@@ -123,7 +124,7 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
    */
   @Test
   public void test2_4_failoverBackToThePreviouslyDownReader()
-      throws SQLException, InterruptedException {
+      throws SQLException {
     assertTrue(clusterSize >= 5, "Minimal cluster configuration: 1 writer + 4 readers");
 
     final String firstReaderInstanceId = instanceIDs[1];
@@ -159,13 +160,15 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
     assertNotEquals(secondReaderInstanceId, thirdReaderInstanceId);
 
     // Grab the id of the fourth reader instance.
-    final HashSet<String> readerInstanceIds = new HashSet<String>(Arrays.asList(instanceIDs)); // getDBClusterReaderInstanceIds();
+    final HashSet<String> readerInstanceIds = new HashSet<>(Arrays.asList(instanceIDs)); // getDBClusterReaderInstanceIds();
     readerInstanceIds.remove(instanceIDs[0]);
     readerInstanceIds.remove(firstReaderInstanceId);
     readerInstanceIds.remove(secondReaderInstanceId);
     readerInstanceIds.remove(thirdReaderInstanceId);
 
-    final String fourthInstanceId = readerInstanceIds.stream().findFirst().get();
+    Optional<String> optionalInstanceId = readerInstanceIds.stream().findFirst();
+    assertTrue(optionalInstanceId.isPresent());
+    final String fourthInstanceId = optionalInstanceId.get();
 
     // Crash the fourth reader instance.
     FailoverSocketFactory.downHost(String.format(pgHostInstancePattern, fourthInstanceId));
@@ -240,7 +243,7 @@ public class ReaderFailoverIntegrationTest extends FailoverIntegrationTest {
 
   /** Connect to a readonly cluster endpoint and ensure that we are doing a reader failover. */
   @Test
-  public void test2_6_clusterEndpointReadOnlyFailover() throws SQLException, InterruptedException {
+  public void test2_6_clusterEndpointReadOnlyFailover() throws SQLException {
     Properties props = new Properties();
     props.setProperty(PGProperty.USER.getName(), pgAuroraUsername);
     props.setProperty(PGProperty.PASSWORD.getName(), pgAuroraPassword);
