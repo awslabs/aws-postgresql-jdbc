@@ -178,7 +178,7 @@ tasks.configureEach<Jar> {
 }
 
 tasks.jar {
-    archiveClassifier.set("original")
+    archiveClassifier.set("unshaded")
 }
 
 tasks.shadowJar {
@@ -214,13 +214,30 @@ tasks.register<Jar>("cleanShadowJar") {
 
     doLast {
         shadowJar.deleteRecursively()
-        val originalJar = tasks.jar.get().archiveFile.get().asFile
-        originalJar.deleteRecursively()
     }
 }
 
 tasks.assemble {
     dependsOn("cleanShadowJar")
+}
+
+fun deleteUnshadedJar() {
+    val unshadedJar = tasks.jar.get().archiveFile.get().asFile
+    if (unshadedJar.exists()) {
+        unshadedJar.deleteRecursively()
+    }
+}
+
+tasks.configureEach<AbstractPublishToMaven> {
+    doLast {
+        deleteUnshadedJar()
+    }
+}
+
+tasks.build {
+    doLast {
+        deleteUnshadedJar()
+    }
 }
 
 val osgiJar by tasks.registering(Bundle::class) {
@@ -349,7 +366,7 @@ val sourceDistribution by tasks.registering(Tar::class) {
         }
     }
     into("src/main/resources") {
-        from(tasks.jar.map {
+        from(tasks.named<Jar>("cleanShadowJar").map {
             zipTree(it.archiveFile).matching {
                 include("META-INF/MANIFEST.MF")
             }
