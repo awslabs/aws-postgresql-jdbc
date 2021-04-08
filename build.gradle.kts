@@ -604,6 +604,18 @@ allprojects {
                     suppressAllPomMetadataWarnings()
 
                     pom {
+
+                        name.set("Amazon Web Services (AWS) JDBC Driver for PostgreSQL")
+                        description.set("Public preview of the Amazon Web Services (AWS) JDBC Driver for PostgreSQL.")
+                        url.set("https://github.com/awslabs/aws-postgresql-jdbc/")
+
+                        licenses {
+                            license {
+                                name.set("BSD-2-Clause")
+                                url.set("https://https://opensource.org/licenses/BSD-2-Clause")
+                            }
+                        }
+
                         developers {
                             developer {
                                 id.set("amazonwebservices")
