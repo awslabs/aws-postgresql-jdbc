@@ -591,7 +591,6 @@ allprojects {
                 return@configure
             }
 
-
             publications {
                 val extraMavenPublications by configurations.creating {
                     isVisible = false
