@@ -751,12 +751,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       return;
     }
 
-    if (this.hosts.isEmpty()) {
-      LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Cannot pick a new connection because the current host list is empty");
-      return;
-    }
-
-    if (isConnected() || !inInitialization) {
+    if (isConnected() || !inInitialization || this.hosts.isEmpty()) {
       failover();
       return;
     }
@@ -1022,9 +1017,9 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       this.metrics.registerFailoverConnects(true);
     }
 
-    updateTopologyAndConnectIfNeeded(true);
     this.currentHost = result.getHost();
     this.currentConnection = result.getConnection();
+    updateTopologyAndConnectIfNeeded(true);
     topologyService.setLastUsedReaderHost(this.currentHost);
     LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Connected to: {0}", this.currentHost);
   }
