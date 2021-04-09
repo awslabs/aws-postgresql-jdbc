@@ -18,9 +18,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.junit.jupiter.api.Disabled;
 import software.aws.rds.jdbc.postgresql.Driver;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.postgresql.PGProperty;
