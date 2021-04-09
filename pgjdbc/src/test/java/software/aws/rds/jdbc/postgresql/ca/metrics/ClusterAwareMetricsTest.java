@@ -9,12 +9,14 @@ package software.aws.rds.jdbc.postgresql.ca.metrics;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@Disabled
 public class ClusterAwareMetricsTest {
 
   @Test

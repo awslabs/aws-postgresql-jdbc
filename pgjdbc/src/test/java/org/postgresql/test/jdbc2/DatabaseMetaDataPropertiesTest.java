@@ -10,6 +10,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.jupiter.api.Disabled;
 import org.postgresql.test.TestUtil;
 
 import org.junit.After;
@@ -25,6 +26,7 @@ import java.sql.SQLException;
  * properties. Methods which return a ResultSet are tested elsewhere. This avoids a complicated
  * setUp/tearDown for something like assertTrue(dbmd.nullPlusNonNullIsNull());
  */
+@Disabled
 public class DatabaseMetaDataPropertiesTest {
   private Connection con;
 

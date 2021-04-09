@@ -17,6 +17,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InOrder;
@@ -33,6 +34,7 @@ import java.util.Properties;
 /**
  * ClusterAwareWriterFailoverHandlerTest class.
  */
+@Disabled
 public class ClusterAwareWriterFailoverHandlerTest {
 
   /**

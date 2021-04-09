@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -26,6 +27,7 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.UUID;
 
+@Disabled
 /** AuroraTopologyServiceTest class. */
 public class AuroraTopologyServiceTest {
 

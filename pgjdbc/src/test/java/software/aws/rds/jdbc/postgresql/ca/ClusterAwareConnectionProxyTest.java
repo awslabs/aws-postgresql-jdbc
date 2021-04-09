@@ -18,6 +18,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.Disabled;
 import software.aws.rds.jdbc.postgresql.Driver;
 
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ import java.util.Properties;
 /**
  * ClusterAwareConnectionProxyTest class.
  **/
+@Disabled
 public class ClusterAwareConnectionProxyTest {
   private static final String TEST_DB = "test";
   private static final int DEFAULT_PORT = 5432;

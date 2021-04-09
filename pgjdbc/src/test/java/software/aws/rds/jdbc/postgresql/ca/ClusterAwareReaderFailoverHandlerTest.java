@@ -21,6 +21,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
@@ -38,7 +39,7 @@ import java.util.Set;
 /**
  * ClusterAwareReaderFailoverHandlerTest class.
  * */
-
+@Disabled
 public class ClusterAwareReaderFailoverHandlerTest {
   static final int numTestUrls = 6;
   static final String testUrl1 = "jdbc:postgresql:aws://writer-1:1234/";
