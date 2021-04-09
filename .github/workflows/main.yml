@@ -73,7 +73,7 @@ jobs:
         S3_BUILD_CACHE_SECRET_KEY: ${{ secrets.S3_BUILD_CACHE_SECRET_KEY }}
       with:
         job-id: jdk8
-        arguments: --no-parallel --no-daemon jandex build test --tests *jdbc2.LoginTimeoutTest
+        arguments: --no-parallel --no-daemon jandex build test --tests org.postgresql.test.jdbc2.*
         properties: |
           skipReplicationTests=
           port=${{ job.services.postgres.ports['5432'] }}
