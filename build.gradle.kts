@@ -10,13 +10,14 @@ import com.github.vlsi.gradle.dsl.configureEach
 import com.github.vlsi.gradle.git.FindGitAttributes
 import com.github.vlsi.gradle.properties.dsl.props
 import com.github.vlsi.gradle.properties.dsl.stringProperty
+import com.github.vlsi.gradle.publishing.dsl.simplifyXml
+import com.github.vlsi.gradle.publishing.dsl.versionFromResolution
 import de.thetaphi.forbiddenapis.gradle.CheckForbiddenApis
 import de.thetaphi.forbiddenapis.gradle.CheckForbiddenApisExtension
 import org.postgresql.buildtools.JavaCommentPreprocessorTask
 
 plugins {
     publishing
-    signing
     // Verification
     checkstyle
     jacoco
@@ -584,12 +585,32 @@ allprojects {
             }
         }
 
-        publishing {
+        configure<PublishingExtension> {
+            if (!project.props.bool("nexus.publish", default = true)) {
+                // Some of the artifacts do not need to be published
+                return@configure
+            }
+
+
             publications {
                 val extraMavenPublications by configurations.creating {
                     isVisible = false
                     isCanBeResolved = false
                     isCanBeConsumed = false
+                }
+
+                afterEvaluate {
+                    named<MavenPublication>(project.name) {
+                        extraMavenPublications.outgoing.artifacts.apply {
+                            val keys = mapTo(HashSet()) {
+                                it.classifier.orEmpty() to it.extension
+                            }
+                            artifacts.removeIf {
+                                keys.contains(it.classifier.orEmpty() to it.extension)
+                            }
+                            forEach { artifact(it) }
+                        }
+                    }
                 }
 
                 create<MavenPublication>("mavenPublication") {
@@ -601,8 +622,10 @@ allprojects {
 
                     suppressAllPomMetadataWarnings()
 
-                    pom {
+                    versionFromResolution()
 
+                    pom {
+                        simplifyXml()
                         name.set("Amazon Web Services (AWS) JDBC Driver for PostgreSQL")
                         description.set("Public preview of the Amazon Web Services (AWS) JDBC Driver for PostgreSQL.")
                         url.set("https://github.com/awslabs/aws-postgresql-jdbc/")
