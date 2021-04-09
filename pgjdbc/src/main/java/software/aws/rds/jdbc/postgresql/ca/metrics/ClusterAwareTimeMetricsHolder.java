@@ -19,8 +19,8 @@ import java.util.logging.Logger;
  */
 public class ClusterAwareTimeMetricsHolder implements ClusterAwareMetricsReporter<Long> {
 
-  private String metricName;
-  private ArrayList<Long> times = new ArrayList<Long>();
+  private final String metricName;
+  private final ArrayList<Long> times = new ArrayList<>();
 
   /**
    * Initialize a metric holder with a metric name.
@@ -56,18 +56,13 @@ public class ClusterAwareTimeMetricsHolder implements ClusterAwareMetricsReporte
 
     StringBuilder logMessage = new StringBuilder(256);
 
-    logMessage.append("** Performance Metrics Report for '");
-    logMessage.append(this.metricName);
-    logMessage.append("' **\n");
-    logMessage.append("\nNumber of reports: " + size);
+    logMessage.append("** Performance Metrics Report for '").append(this.metricName).append("' **\n");
+    logMessage.append("\nNumber of reports: ").append(size);
     if (size > 0) {
-      logMessage.append("\nLongest reported time: " + longestTime + " ms");
-      logMessage.append("\nShortest reported time: " + shortestTime + " ms");
-      logMessage.append(
-          "\nAverage query execution time: "
-              + (average)
-              + " ms");
-      logMessage.append("\np95 value: " + sortedTimes[index95 - 1]);
+      logMessage.append("\nLongest reported time: ").append(longestTime).append(" ms");
+      logMessage.append("\nShortest reported time: ").append(shortestTime).append(" ms");
+      logMessage.append("\nAverage query execution time: ").append(average).append(" ms");
+      logMessage.append("\np95 value: ").append(sortedTimes[index95 - 1]);
     }
     log.log(Level.INFO, logMessage.toString());
   }

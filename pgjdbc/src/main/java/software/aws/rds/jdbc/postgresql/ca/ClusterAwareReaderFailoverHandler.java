@@ -31,12 +31,12 @@ import java.util.logging.Logger;
 /**
  * An implementation of ReaderFailoverHandler.
  *
- * <p>Reader Failover Process goal is to connect to any available reader. In order to connect
+ * <p>The goal of the reader failover process is to connect to any available reader. In order to connect
  * faster, this implementation tries to connect to two readers at the same time. The first
  * successfully connected reader is returned as the process result. If both readers are unavailable
- * (i.e. could not be connected to), the process picks up another pair of readers and repeat. If no
- * reader has been connected to, the process may consider a writer host, and other hosts marked
- * down, to connect to.
+ * (i.e. could not be connected to), the process picks up another pair of readers and repeats. If no
+ * reader connection has successfully been established, the process may consider connecting to a writer host, and other
+ * hosts marked as down.
  */
 
 public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler {
@@ -52,7 +52,7 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
   protected Properties connectionProps;
 
   public ClusterAwareReaderFailoverHandler(
-      TopologyService topologyService, ConnectionProvider connProvider, Properties connectionProps) {
+          TopologyService topologyService, ConnectionProvider connProvider, Properties connectionProps) {
     this(topologyService, connProvider, connectionProps, DEFAULT_FAILOVER_TIMEOUT, DEFAULT_READER_CONNECT_TIMEOUT);
   }
 
@@ -64,10 +64,10 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
    * @param failoverTimeoutMs timeout for the entire reader failover process
    * @param timeoutMs timeout for each individual connection attempt
    *
-   * */
-
+   */
   public ClusterAwareReaderFailoverHandler(
-      TopologyService topologyService, ConnectionProvider connProvider, Properties connectionProps, int failoverTimeoutMs, int timeoutMs) {
+          TopologyService topologyService, ConnectionProvider connProvider, Properties connectionProps,
+          int failoverTimeoutMs, int timeoutMs) {
     this.topologyService = topologyService;
     this.connProvider = connProvider;
     this.connectionProps = connectionProps;
@@ -86,21 +86,40 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
   }
 
   /**
-   * Called to start Reader Failover Process. This process tries to connect to any reader. If no
+   * Called to start the reader failover process. This process tries to connect to any reader. If no
    * reader is available then driver may also try to connect to a writer host, down hosts, and the
    * current reader host.
    *
-   * @param hosts       Cluster current topology.
+   * @param hosts       The latest cluster topology information that we had before connection failure.
    * @param currentHost The currently connected host that has failed.
    *
-   * @return {@link ReaderFailoverResult} The results of this process. May return null, which is
-   *     considered an unsuccessful result.
+   * @return {@link ReaderFailoverResult} The results of this process.
    * @throws SQLException when a thread gets interrupted and failover fails
    */
   @Override
   public ReaderFailoverResult failover(List<HostInfo> hosts, @Nullable HostInfo currentHost)
-      throws SQLException {
+          throws SQLException {
+    if (hosts.isEmpty()) {
+      LOGGER.log(Level.FINE, "[ClusterAwareReaderFailoverHandler] failover was called with an invalid (empty) topology");
+      return new ReaderFailoverResult(null, null, false);
+    }
+
     ExecutorService executor = Executors.newSingleThreadExecutor();
+    Future<ReaderFailoverResult> future = submitInternalFailoverTask(hosts, currentHost, executor);
+    return getInternalFailoverResult(executor, future);
+  }
+
+  /**
+   * Submit the internal failover task for execution
+   *
+   * @param hosts The latest cluster topology information that we had before connection failure
+   * @param currentHost The currently connected host that has failed
+   * @param currentHost The currently connected host that has failed
+   * @param executor The {@link ExecutorService} to submit the internal failover task to
+   * @return the {@link Future} associated with the submitted internal failover task
+   */
+  private Future<ReaderFailoverResult> submitInternalFailoverTask(List<HostInfo> hosts, @Nullable HostInfo currentHost,
+                                                                  ExecutorService executor) {
     Future<ReaderFailoverResult> future = executor.submit(() -> {
       ReaderFailoverResult result = null;
       while (result == null || !result.isConnected()) {
@@ -110,11 +129,24 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
       return result;
     });
     executor.shutdown();
+    return future;
+  }
 
+  /**
+   * Get the results of the internal reader failover process
+   *
+   * @param executor The executor that the internal failover task was submitted to
+   * @param future The future associated with the internal failover task
+   * @return the results of the internal failover process
+   * @throws SQLException If this thread is interrupted while trying to get the results
+   */
+  private ReaderFailoverResult getInternalFailoverResult(ExecutorService executor,
+                                                         Future<ReaderFailoverResult> future) throws SQLException {
     ReaderFailoverResult defaultResult = new ReaderFailoverResult(null, null, false);
 
     try {
-      return future.get(this.maxFailoverTimeoutMs, TimeUnit.MILLISECONDS);
+      ReaderFailoverResult result = future.get(this.maxFailoverTimeoutMs, TimeUnit.MILLISECONDS);
+      return result == null ? defaultResult : result;
 
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -138,12 +170,12 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
    * Helper method for {@link #failover(List, HostInfo)}.
    *
    * @param hosts List of hosts in the current topology
-   * @param currentHost Currently connected host
-   * @return {@link ReaderFailoverResult}. The result
+   * @param currentHost The currently connected host
+   * @return The {@link ReaderFailoverResult} of the internal failover process
    * @throws SQLException when a thread gets interrupted and failover fails
    */
   protected ReaderFailoverResult failoverInternal(List<HostInfo> hosts, @Nullable HostInfo currentHost)
-      throws SQLException {
+          throws SQLException {
     this.topologyService.addToDownHostList(currentHost);
     if (hosts.isEmpty()) {
       return new ReaderFailoverResult(null, null, false);
@@ -215,14 +247,18 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
    * Called to get any available reader connection. If no reader is available then result of process
    * is unsuccessful. This process will not attempt to connect to the writer host.
    *
-   * @param hostList Cluster current topology.
+   * @param hostList Current topology for the cluster.
    *
-   * @return {@link ReaderFailoverResult} The results of this process. May return null, which is
-   *     considered an unsuccessful result.
+   * @return {@link ReaderFailoverResult} The results of this process.
    * @throws SQLException when a thread gets interrupted and failover fails
    */
   @Override
   public ReaderFailoverResult getReaderConnection(List<HostInfo> hostList) throws SQLException {
+    if (hostList.isEmpty()) {
+      LOGGER.log(Level.FINE, "[ClusterAwareReaderFailoverHandler] getReaderConnection was called with an invalid (empty) topology");
+      return new ReaderFailoverResult(null, null, false);
+    }
+
     Set<String> downHosts = topologyService.getDownHosts();
     List<HostInfo> readerHosts = getReaderHostsByPriority(hostList, downHosts);
     return getConnectionFromHostList(readerHosts);
@@ -273,37 +309,16 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
    * @throws SQLException when a thread gets interrupted and failover fails
    */
   private ReaderFailoverResult getConnectionFromHostList(List<HostInfo> hosts)
-      throws SQLException {
+          throws SQLException {
     ExecutorService executor = Executors.newFixedThreadPool(2);
     CompletionService<ReaderFailoverResult> completionService =
-        new ExecutorCompletionService<>(executor);
-
-    ReaderFailoverResult result;
+            new ExecutorCompletionService<>(executor);
 
     try {
       for (int i = 0; i < hosts.size(); i += 2) {
-        boolean secondAttemptPresent = i + 1 < hosts.size();
-        Future<ReaderFailoverResult> attempt1 =
-            completionService.submit(
-                new ConnectionAttemptTask(hosts.get(i)));
-        if (secondAttemptPresent) {
-          Future<ReaderFailoverResult> attempt2 =
-              completionService.submit(
-                  new ConnectionAttemptTask(hosts.get(i + 1)));
-          result = getResultFromAttemptPair(attempt1, attempt2, completionService);
-        } else {
-          result = getNextResult(completionService);
-        }
-
-        if (result != null && result.isConnected()) {
-
-          String portPair = "<null>";
-          HostInfo resultHostInfo = result.getHost();
-          if ( resultHostInfo != null) {
-            portPair = resultHostInfo.getHostPortPair();
-          }
-          LOGGER.log(Level.FINE, "[ClusterAwareReaderFailoverHandler] Established read-only connection to ''{0}''",
-              portPair);
+        // submit connection attempt tasks in batches of 2
+        ReaderFailoverResult result = getResultFromNextTaskBatch(hosts, executor, completionService, i);
+        if (result.isConnected()) {
           return result;
         }
 
@@ -312,54 +327,49 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
           throw new SQLException(
-              "Thread was interrupted.", "70100", e);
+                  "Thread was interrupted.", "70100", e);
         }
       }
 
       return new ReaderFailoverResult(null, null, false);
-
     } finally {
       executor.shutdownNow();
     }
   }
 
   /**
-   * Retrieves the result from both connection attempts
+   * Submit connection attempt tasks in batches of two and retrieve the results. If the first task to complete is
+   * successful, cancel the other task, otherwise wait on its completion and return the result. If the size of the host
+   * list is odd, the last call to this method will submit a batch of one instead.
    *
-   * @param attempt1 The first attempt to check
-   * @param attempt2 The second attempt to check
-   * @param service The completion service used to check the results from the future variables
-   * @return {@link ReaderFailoverResult} instance which contains the connection results. If it's filled
-   *     with null values and is not connected then the failover has failed
-   * @throws SQLException when a thread gets interrupted and failover fails
+   * @param hostGroup The list of potential reader connections to attempt
+   * @param executor The {@link ExecutorService} that the tasks will be submitted to through the {@link CompletionService}
+   * @param completionService The {@link CompletionService} to submit the tasks to
+   * @param i The index of the next host that we should attempt to connect to
+   * @return The {@link ReaderFailoverResult} representing the results of this task batch
+   * @throws SQLException If this thread is interrupted while trying to get the results
    */
-  private ReaderFailoverResult getResultFromAttemptPair(
-      Future<ReaderFailoverResult> attempt1,
-      Future<ReaderFailoverResult> attempt2,
-      CompletionService<ReaderFailoverResult> service)
-      throws SQLException {
-    try {
-      Future<ReaderFailoverResult> firstCompleted =
-          service.poll(this.timeoutMs, TimeUnit.MILLISECONDS);
-      if (firstCompleted != null) {
-        ReaderFailoverResult result = firstCompleted.get();
-        if (result.isConnected()) {
-          if (firstCompleted.equals(attempt1)) {
-            attempt2.cancel(true);
-          } else {
-            attempt1.cancel(true);
-          }
-          return result;
-        }
-      }
-    } catch (ExecutionException e) {
-      return getNextResult(service);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      // "Thread was interrupted"
-      throw new SQLException("Thread was interrupted.", "70100", e);
+  private ReaderFailoverResult getResultFromNextTaskBatch(List<HostInfo> hostGroup, ExecutorService executor,
+                                                          CompletionService<ReaderFailoverResult> completionService,
+                                                          int i) throws SQLException {
+    ReaderFailoverResult result;
+    int numTasks = i + 1 < hostGroup.size() ? 2 : 1;
+    completionService.submit(new ConnectionAttemptTask(hostGroup.get(i)));
+
+    if (numTasks == 2) {
+      completionService.submit(new ConnectionAttemptTask(hostGroup.get(i + 1)));
     }
-    return getNextResult(service);
+
+    for (int taskNum = 0; taskNum < numTasks; taskNum++) {
+      result = getNextResult(completionService);
+
+      if (result.isConnected()) {
+        logConnectionSuccess(result);
+        executor.shutdownNow();
+        return result;
+      }
+    }
+    return new ReaderFailoverResult(null, null, false);
   }
 
   /**
@@ -370,20 +380,37 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
    * @throws SQLException when a thread gets interrupted and failover fails
    */
   private ReaderFailoverResult getNextResult(CompletionService<ReaderFailoverResult> service)
-      throws SQLException {
+          throws SQLException {
+    ReaderFailoverResult defaultResult = new ReaderFailoverResult(null, null, false);
     try {
-      Future<ReaderFailoverResult> result = service.poll(this.timeoutMs, TimeUnit.MILLISECONDS);
-      if (result == null) {
+      Future<ReaderFailoverResult> future = service.poll(this.timeoutMs, TimeUnit.MILLISECONDS);
+      if (future == null) {
         return new ReaderFailoverResult(null, null, false);
       }
-      return result.get();
+
+      ReaderFailoverResult result = future.get();
+      return result == null ? defaultResult : result;
     } catch (ExecutionException e) {
-      return new ReaderFailoverResult(null, null, false);
+      return defaultResult;
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       // "Thread was interrupted"
       throw new SQLException("Thread was interrupted.", "70100", e);
     }
+  }
+
+  /**
+   * Log a connection success, indicating the successful host port pair that we connected to
+   *
+   * @param result The successful {@link ReaderFailoverResult}
+   */
+  private void logConnectionSuccess(ReaderFailoverResult result) {
+    String hostPortPair = "<null>";
+    HostInfo host = result.getHost();
+    if (host != null) {
+      hostPortPair = host.getHostPortPair();
+    }
+    LOGGER.log(Level.FINE, "[ClusterAwareReaderFailoverHandler] Established read-only connection to ''{0}''", hostPortPair);
   }
 
   /**
@@ -398,7 +425,7 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
      * @param newHost The new host to attempt connection
      */
     private ConnectionAttemptTask(
-        HostInfo newHost) {
+            HostInfo newHost) {
       this.newHost = newHost;
     }
 
@@ -410,15 +437,19 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
       if (StringUtils.isNullOrEmpty(this.newHost.getHost())) {
         return new ReaderFailoverResult(null, null, false);
       }
-      LOGGER.log(Level.FINE, "[ClusterAwareReaderFailoverHandler] Attempting to establish read-only connection to ''{0}''", this.newHost.getHostPortPair());
+      LOGGER.log(Level.FINE,
+              "[ClusterAwareReaderFailoverHandler] Attempting to establish read-only connection to ''{0}''",
+              this.newHost.getHostPortPair());
 
       try {
-        BaseConnection conn = connProvider.connect(this.newHost.toHostSpec(), connectionProps, this.newHost.getUrl(connectionProps));
+        BaseConnection conn = connProvider.connect(this.newHost.toHostSpec(), connectionProps,
+                this.newHost.getUrl(connectionProps));
         topologyService.removeFromDownHostList(this.newHost);
         return new ReaderFailoverResult(conn, this.newHost, true);
       } catch (SQLException e) {
         topologyService.addToDownHostList(this.newHost);
-        LOGGER.log(Level.FINE, "[ClusterAwareReaderFailoverHandler] Failed to establish read-only connection to ''{0}''", this.newHost);
+        LOGGER.log(Level.FINE,
+                "[ClusterAwareReaderFailoverHandler] Failed to establish read-only connection to ''{0}''", this.newHost);
         return new ReaderFailoverResult(null, null, false);
       }
     }

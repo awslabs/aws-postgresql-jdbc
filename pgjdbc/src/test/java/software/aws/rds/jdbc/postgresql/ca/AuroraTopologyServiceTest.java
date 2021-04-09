@@ -9,7 +9,6 @@ package software.aws.rds.jdbc.postgresql.ca;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -183,7 +182,7 @@ public class AuroraTopologyServiceTest {
     when(mockConn.createStatement()).thenThrow(SQLException.class);
 
     final List<HostInfo> hosts = spyProvider.getTopology(mockConn, true);
-    assertNull(hosts);
+    assertTrue(hosts.isEmpty());
   }
 
   @Test

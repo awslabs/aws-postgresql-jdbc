@@ -22,7 +22,7 @@ public class ClusterAwareHitMissMetricsHolder implements ClusterAwareMetricsRepo
   protected int numberOfReports;
   protected int numberOfHits;
 
-  private Object lockObject = new Object();
+  private final Object lockObject = new Object();
 
   /**
    * Initialize a metric holder with a metric name.
@@ -58,10 +58,10 @@ public class ClusterAwareHitMissMetricsHolder implements ClusterAwareMetricsRepo
     logMessage.append("** Performance Metrics Report for '");
     logMessage.append(this.metricName);
     logMessage.append("' **\n");
-    logMessage.append("\nNumber of reports: " + this.numberOfReports);
+    logMessage.append("\nNumber of reports: ").append(this.numberOfReports);
     if (this.numberOfReports > 0) {
-      logMessage.append("\nNumber of hits: " + this.numberOfHits);
-      logMessage.append("\nRatio: " + (this.numberOfHits * 100.0 / this.numberOfReports) + " %");
+      logMessage.append("\nNumber of hits: ").append(this.numberOfHits);
+      logMessage.append("\nRatio: ").append(this.numberOfHits * 100.0 / this.numberOfReports).append(" %");
     }
 
     log.log(Level.INFO, logMessage.toString());

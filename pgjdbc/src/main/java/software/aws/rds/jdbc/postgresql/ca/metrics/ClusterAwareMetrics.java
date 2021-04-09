@@ -6,8 +6,9 @@
 
 package software.aws.rds.jdbc.postgresql.ca.metrics;
 
-import java.util.ArrayList;
+import java.io.Serializable;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -27,28 +28,26 @@ import java.util.logging.Logger;
  */
 public class ClusterAwareMetrics {
 
-  private ClusterAwareMetricsReporter failureDetection =
+  private final ClusterAwareMetricsReporter<Long> failureDetection =
       new ClusterAwareTimeMetricsHolder("Failover Detection");
-  private ClusterAwareMetricsReporter writerFailoverProcedure =
+  private final ClusterAwareMetricsReporter<Long> writerFailoverProcedure =
       new ClusterAwareTimeMetricsHolder("Writer Failover Procedure");
-  private ClusterAwareMetricsReporter readerFailoverProcedure =
+  private final ClusterAwareMetricsReporter<Long> readerFailoverProcedure =
       new ClusterAwareTimeMetricsHolder("Reader Failover Procedure");
 
-  private ClusterAwareMetricsReporter queryTopology =
+  private final ClusterAwareMetricsReporter<Long> queryTopology =
       new ClusterAwareTimeMetricsHolder("Topology Query");
 
-  private ClusterAwareMetricsReporter failoverConnects =
+  private final ClusterAwareMetricsReporter<Boolean> failoverConnects =
       new ClusterAwareHitMissMetricsHolder("Successful Failover Reconnects");
-  private ArrayList<ClusterAwareMetricsReporter> reporters;
+  private final List<ClusterAwareMetricsReporter<? extends Serializable>> reporters;
 
   /**
    * Constructor for ClusterAwareMetrics. Creates a list of all metrics that will be recorded.
    */
   public ClusterAwareMetrics() {
-    reporters = new ArrayList<ClusterAwareMetricsReporter>(
-        Arrays.asList(failureDetection, writerFailoverProcedure, readerFailoverProcedure, queryTopology,
-            failoverConnects)
-    );
+    reporters = Arrays.asList(failureDetection, writerFailoverProcedure, readerFailoverProcedure, queryTopology,
+                    failoverConnects);
   }
 
   /**
@@ -102,7 +101,6 @@ public class ClusterAwareMetrics {
    * @param log the log used to display
    */
   public void reportMetrics(Logger log) {
-
     reporters.forEach(report -> report.reportMetrics(log));
   }
 
