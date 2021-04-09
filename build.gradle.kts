@@ -613,7 +613,7 @@ allprojects {
                     }
                 }
 
-                create<MavenPublication>("mavenPublication") {
+                create<MavenPublication>(project.name) {
                     groupId = "software.aws.rds"
                     artifactId = "aws-postgresql-jdbc"
                     version = "0.1.0"
