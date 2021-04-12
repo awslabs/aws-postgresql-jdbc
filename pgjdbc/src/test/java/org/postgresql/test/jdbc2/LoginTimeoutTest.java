@@ -8,6 +8,7 @@ package org.postgresql.test.jdbc2;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import org.junit.jupiter.api.Disabled;
 import org.postgresql.test.TestUtil;
 
 import org.junit.Before;
@@ -23,6 +24,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
+@Disabled
 public class LoginTimeoutTest {
 
   @Before
