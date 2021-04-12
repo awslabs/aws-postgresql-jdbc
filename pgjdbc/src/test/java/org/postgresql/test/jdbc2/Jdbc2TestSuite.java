@@ -86,6 +86,7 @@ import org.junit.runners.Suite;
     JavaVersionTest.class,
     JBuilderTest.class,
     LoginTimeoutTest.class,
+    LoginTimeoutTest2.class,
     LogServerMessagePropertyTest.class,
     LruCacheTest.class,
     MiscTest.class,
