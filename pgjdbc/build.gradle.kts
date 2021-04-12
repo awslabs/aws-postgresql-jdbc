@@ -255,7 +255,7 @@ val osgiJar by tasks.registering(Bundle::class) {
             Bundle-Activator: org.postgresql.osgi.PGBundleActivator
             Bundle-SymbolicName: software.aws.rds
             Bundle-Name: Amazon Web Services (AWS) JDBC Driver for PostgreSQL
-            Bundle-Copyright: Copyright (c) 2003-2020, PostgreSQL Global Development Group
+            Bundle-Copyright: Copyright Amazon.com Inc. or affiliates.
             Require-Capability: osgi.ee;filter:="(&(|(osgi.ee=J2SE)(osgi.ee=JavaSE))(version>=1.8))"
             Provide-Capability: osgi.service;effective:=active;objectClass=org.osgi.service.jdbc.DataSourceFactory
             """
