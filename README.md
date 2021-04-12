@@ -1,5 +1,10 @@
 # Amazon Web Services (AWS) JDBC Driver for PostgreSQL
 
+[![Build Status](https://github.com/awslabs/aws-postgresql-jdbc/workflows/CI/badge.svg)](https://github.com/awslabs/aws-postgresql-jdbc/actions?query=workflow%3A%22CI%22)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/software.aws.rds/aws-postgresql-jdbc/badge.svg)](https://maven-badges.herokuapp.com/maven-central/software.aws.rds/aws-postgresql-jdbc)
+[![Javadoc](https://javadoc.io/badge2/software.aws.rds/aws-postgresql-jdbc/javadoc.svg)](https://javadoc.io/doc/software.aws.rds/aws-postgresql-jdbc)
+[![License](https://img.shields.io/badge/License-BSD--2--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
+
 **The Amazon Web Services (AWS) JDBC Driver for PostgreSQL** is a driver that enables applications to take full advantage of the features of clustered PostgreSQL databases. It is based on and can be used as a drop-in compatible for the [PostgreSQL JDBC Driver](https://github.com/pgjdbc/pgjdbc) and is compatible with all PostgreSQL deployments.
 
 The AWS JDBC Driver for PostgreSQL currently enables fast failover for Amazon Aurora with PostgreSQL compatibility. Support for additional features of clustered databases, including features of Amazon RDS for PostgreSQL and on-premises PostgreSQL deployments, is planned.
