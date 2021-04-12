@@ -614,8 +614,9 @@ allprojects {
                 // </editor-fold>
                 // <editor-fold defaultstate="collapsed" desc="Configuration of the published pom.xml">
                 create<MavenPublication>(project.name) {
-                    artifactId = project.name
-                    version = rootProject.version.toString()
+                    groupId = "software.aws.rds"
+                    artifactId = "aws-postgresql-jdbc"
+                    version = "0.1.0"
                     from(components["java"])
 
                     // Gradle feature variants can't be mapped to Maven's pom
@@ -627,68 +628,27 @@ allprojects {
                     versionFromResolution()
                     pom {
                         simplifyXml()
-                        name.set(
-                            (project.findProperty("artifact.name") as? String) ?: "pgdjbc ${project.name.capitalize()}"
-                        )
-                        description.set(project.description ?: "PostgreSQL JDBC Driver ${project.name.capitalize()}")
-                        inceptionYear.set("1997")
-                        url.set("https://jdbc.postgresql.org")
+                        name.set("Amazon Web Services (AWS) JDBC Driver for PostgreSQL")
+                        description.set("Public preview of the Amazon Web Services (AWS) JDBC Driver for PostgreSQL.")
+                        url.set("https://github.com/awslabs/aws-postgresql-jdbc/")
                         licenses {
                             license {
                                 name.set("BSD-2-Clause")
-                                url.set("https://jdbc.postgresql.org/about/license.html")
-                                comments.set("BSD-2-Clause, copyright PostgreSQL Global Development Group")
-                                distribution.set("repo")
+                                url.set("https://https://opensource.org/licenses/BSD-2-Clause")
                             }
-                        }
-                        organization {
-                            name.set("PostgreSQL Global Development Group")
-                            url.set("https://jdbc.postgresql.org/")
                         }
                         developers {
                             developer {
-                                id.set("davecramer")
-                                name.set("Dave Cramer")
-                            }
-                            developer {
-                                id.set("jurka")
-                                name.set("Kris Jurka")
-                            }
-                            developer {
-                                id.set("oliver")
-                                name.set("Oliver Jowett")
-                            }
-                            developer {
-                                id.set("ringerc")
-                                name.set("Craig Ringer")
-                            }
-                            developer {
-                                id.set("vlsi")
-                                name.set("Vladimir Sitnikov")
-                            }
-                            developer {
-                                id.set("bokken")
-                                name.set("Brett Okken")
-                            }
-                        }
-                        issueManagement {
-                            system.set("GitHub issues")
-                            url.set("https://github.com/pgjdbc/pgjdbc/issues")
-                        }
-                        mailingLists {
-                            mailingList {
-                                name.set("PostgreSQL JDBC development list")
-                                subscribe.set("https://lists.postgresql.org/")
-                                unsubscribe.set("https://lists.postgresql.org/unsubscribe/")
-                                post.set("pgsql-jdbc@postgresql.org")
-                                archive.set("https://www.postgresql.org/list/pgsql-jdbc/")
+                                id.set("amazonwebservices")
+                                organization.set("Amazon Web Services")
+                                organizationUrl.set("https://aws.amazon.com")
+                                email.set("aws-rds-oss@amazon.com")
                             }
                         }
                         scm {
-                            connection.set("scm:git:https://github.com/pgjdbc/pgjdbc.git")
-                            developerConnection.set("scm:git:https://github.com/pgjdbc/pgjdbc.git")
-                            url.set("https://github.com/pgjdbc/pgjdbc")
-                            tag.set("HEAD")
+                            connection.set("scm:git:https://github.com/awslabs/aws-postgresql-jdbc.git")
+                            developerConnection.set("scm:git@github.com:awslabs/aws-postgresql-jdbc.git")
+                            url.set("https://github.com/awslabs/aws-postgresql-jdbc")
                         }
                     }
                 }
