@@ -8,11 +8,11 @@ package org.postgresql.test.jdbc2;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.junit.jupiter.api.Disabled;
 import org.postgresql.test.TestUtil;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
 
 import java.io.IOException;
 import java.net.InetAddress;
