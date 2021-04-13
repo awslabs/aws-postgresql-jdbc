@@ -16,7 +16,7 @@ import org.checkerframework.checker.nullness.qual.RequiresNonNull;
 import org.postgresql.PGProperty;
 import org.postgresql.core.BaseConnection;
 import org.postgresql.core.TransactionState;
-import org.postgresql.util.ConnectionUrlParser;
+import org.postgresql.util.HostUtils;
 import org.postgresql.util.HostSpec;
 import org.postgresql.util.IpAddressUtils;
 import org.postgresql.util.PSQLException;
@@ -304,7 +304,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    */
   @RequiresNonNull("this.rdsDnsAnalyzer")
   private HostSpec getHostSpecFromHostPatternSetting(@UnderInitialization ClusterAwareConnectionProxy this) throws SQLException {
-    HostSpec hostSpec = ConnectionUrlParser.parseHostPortPair(this.clusterInstanceHostPatternSetting);
+    HostSpec hostSpec = HostUtils.parse(this.clusterInstanceHostPatternSetting);
     if (hostSpec == null) {
       throw new SQLException("Invalid value in 'clusterInstanceHostPattern' configuration property.");
     }
