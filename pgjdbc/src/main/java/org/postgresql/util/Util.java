@@ -31,12 +31,10 @@ public class Util {
   private static final Object lockObj = new Object();
 
   /**
-   * Returns the package name of the given class.
-   * Using clazz.getPackage().getName() is not an alternative because under some class loaders the method getPackage() just returns null.
+   * Get the name of the package that the supplied class belongs to
    *
-   * @param clazz
-   *            the Class from which to get the package name
-   * @return the package name
+   * @param clazz the {@link Class} to analyze
+   * @return the name of the package that the supplied class belongs to
    */
   public static String getPackageName(Class<?> clazz) {
     String fqcn = clazz.getName();
@@ -69,15 +67,14 @@ public class Util {
     return shadingPrefix + clazzName;
   }
 
-  /** Cache for the JDBC interfaces already verified */
   private static final ConcurrentMap<Class<?>, Boolean> isJdbcInterfaceCache = new ConcurrentHashMap<>();
 
   /**
-   * Recursively checks for interfaces on the given class to determine if it implements a java.sql, javax.sql or org.postgresql interface.
+   * Check whether the given class implements a JDBC interface defined in a JDBC package. See {@link #isJdbcPackage(String)}
+   * Calls to this function are cached for improved efficiency.
    *
-   * @param clazz
-   *            The class to investigate.
-   * @return boolean
+   * @param clazz the class to analyze
+   * @return true if the given class implements a JDBC interface
    */
   public static boolean isJdbcInterface(Class<?> clazz) {
     if (Util.isJdbcInterfaceCache.containsKey(clazz)) {
@@ -116,33 +113,29 @@ public class Util {
   }
 
   /**
-   * Check if the package name is a known JDBC package.
+   * Check whether the given package is a JDBC package
    *
-   * @param packageName
-   *            The package name to check.
-   * @return boolean
+   * @param packageName the name of the package to analyze
+   * @return true if the given package is a JDBC package
    */
   public static boolean isJdbcPackage(@Nullable String packageName) {
     return packageName != null
-        && (packageName.startsWith("java.sql")
-        || packageName.startsWith("javax.sql")
-        || packageName.startsWith(shadingPrefix("org.postgresql")));
+            && (packageName.startsWith("java.sql")
+            || packageName.startsWith("javax.sql")
+            || packageName.startsWith(shadingPrefix("org.postgresql")));
   }
 
-  /** Cache for the implemented interfaces searched. */
-  private static final ConcurrentMap<Class<?>, Class<?>[]> implementedInterfacesCache = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<Class<?>, Class<?>[]> getImplementedInterfacesCache = new ConcurrentHashMap<>();
 
   /**
-   * Retrieves a list with all interfaces implemented by the given class. If possible gets this information from a cache instead of navigating through the
-   * object hierarchy. Results are stored in a cache for future reference.
+   * Get the {@link Class} objects corresponding to the interfaces implemented by the given class. Calls to this function
+   * are cached for improved efficiency.
    *
-   * @param clazz
-   *            The class from which the interface list will be retrieved.
-   * @return
-   *         An array with all the interfaces for the given class.
+   * @param clazz the class to analyze
+   * @return the interfaces implemented by the given class
    */
   public static Class<?>[] getImplementedInterfaces(Class<?> clazz) {
-    Class<?>[] implementedInterfaces = Util.implementedInterfacesCache.get(clazz);
+    Class<?>[] implementedInterfaces = Util.getImplementedInterfacesCache.get(clazz);
     if (implementedInterfaces != null) {
       return implementedInterfaces;
     }
@@ -154,7 +147,7 @@ public class Util {
     } while ((superClass = superClass.getSuperclass()) != null);
 
     implementedInterfaces = interfaces.toArray(new Class<?>[0]);
-    Class<?>[] oldValue = Util.implementedInterfacesCache.putIfAbsent(clazz, implementedInterfaces);
+    Class<?>[] oldValue = Util.getImplementedInterfacesCache.putIfAbsent(clazz, implementedInterfaces);
     if (oldValue != null) {
       implementedInterfaces = oldValue;
     }
@@ -163,25 +156,25 @@ public class Util {
   }
 
   /**
-   * Method used to build a a string for a log message. It lists out the stack trace to keep track of
-   * which methods were called before the exception.
+   * For the given {@link Throwable}, return a formatted string representation of the stack trace. This method is
+   * provided for logging purposes.
    *
-   * @param t The throwable error message
-   * @param callingClass The class in which the method was called
-   * @return A string for a log message
+   * @param t the throwable containing the stack trace that we want to transform into a string
+   * @param callingClass the class that is calling this method
+   * @return the formatted string representation of the stack trace attached to the given {@link Throwable}
    */
   public static String stackTraceToString(Throwable t, Class callingClass) {
     StringBuilder buffer = new StringBuilder();
-    buffer.append("\n\n[");
+    buffer.append("\n\n========== [");
     buffer.append(callingClass.getName());
-    buffer.append("]: EXCEPTION STACK TRACE:\n\n");
+    buffer.append("]: Exception Detected: ==========\n\n");
 
     buffer.append(t.getClass().getName());
 
     String exceptionMessage = t.getMessage();
 
     if (exceptionMessage != null) {
-      buffer.append("MESSAGE: ");
+      buffer.append("Message: ");
       buffer.append(exceptionMessage);
     }
 
@@ -191,8 +184,9 @@ public class Util {
 
     t.printStackTrace(printOut);
 
-    buffer.append("STACKTRACE:\n\n");
+    buffer.append("Stack Trace:\n\n");
     buffer.append(out.toString());
+    buffer.append("============================\n\n\n");
 
     return buffer.toString();
   }
