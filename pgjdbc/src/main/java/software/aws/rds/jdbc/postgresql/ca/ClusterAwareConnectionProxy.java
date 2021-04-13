@@ -16,12 +16,10 @@ import org.checkerframework.checker.nullness.qual.RequiresNonNull;
 import org.postgresql.PGProperty;
 import org.postgresql.core.BaseConnection;
 import org.postgresql.core.TransactionState;
-import org.postgresql.util.HostUtils;
 import org.postgresql.util.HostSpec;
 import org.postgresql.util.IpAddressUtils;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
-import org.postgresql.util.StringUtils;
 import org.postgresql.util.Util;
 
 import java.lang.reflect.InvocationHandler;
@@ -257,7 +255,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
             "[ClusterAwareConnectionProxy] 'clusterInstanceHostPatternSetting' configuration setting: {0}",
             this.clusterInstanceHostPatternSetting);
 
-    if (!StringUtils.isNullOrEmpty(this.clusterInstanceHostPatternSetting)) {
+    if (!Util.isNullOrEmpty(this.clusterInstanceHostPatternSetting)) {
       initFromHostPatternSetting(hostSpec, props, url);
     } else if (IpAddressUtils.isIPv4(hostSpec.getHost())
             || IpAddressUtils.isIPv6(hostSpec.getHost())) {
@@ -304,7 +302,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    */
   @RequiresNonNull("this.rdsDnsAnalyzer")
   private HostSpec getHostSpecFromHostPatternSetting(@UnderInitialization ClusterAwareConnectionProxy this) throws SQLException {
-    HostSpec hostSpec = HostUtils.parse(this.clusterInstanceHostPatternSetting);
+    HostSpec hostSpec = Util.parseUrl(this.clusterInstanceHostPatternSetting);
     if (hostSpec == null) {
       throw new SQLException("Invalid value in 'clusterInstanceHostPattern' configuration property.");
     }
@@ -426,7 +424,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    */
   @RequiresNonNull({"this.topologyService", "this.rdsDnsAnalyzer"})
   private void setClusterId(@UnderInitialization ClusterAwareConnectionProxy this, String host, int port) {
-    if (!StringUtils.isNullOrEmpty(this.clusterIdSetting)) {
+    if (!Util.isNullOrEmpty(this.clusterIdSetting)) {
       this.topologyService.setClusterId(this.clusterIdSetting);
     } else if (this.isRdsProxy) {
       // Each proxy is associated with a single cluster so it's safe to use the RDS Proxy Url as the cluster ID
@@ -434,7 +432,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
     } else if (this.isRds) {
       // If it's a cluster endpoint or reader cluster endpoint, then let's use it as the cluster ID
       String clusterRdsHostUrl = this.rdsDnsAnalyzer.getRdsClusterHostUrl(host);
-      if (!StringUtils.isNullOrEmpty(clusterRdsHostUrl)) {
+      if (!Util.isNullOrEmpty(clusterRdsHostUrl)) {
         this.topologyService.setClusterId(clusterRdsHostUrl + ":" + port);
       }
     }
@@ -829,9 +827,9 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   protected synchronized @Nullable BaseConnection createConnectionForHost(
           @UnknownInitialization ClusterAwareConnectionProxy this, HostInfo hostInfo, Properties props) throws SQLException {
     String dbname = props.getProperty("PGDBNAME", "");
-    if (StringUtils.isNullOrEmpty(dbname) && this.currentConnection != null) {
+    if (Util.isNullOrEmpty(dbname) && this.currentConnection != null) {
       String currentDbName = this.currentConnection.getCatalog();
-      if (!StringUtils.isNullOrEmpty(currentDbName)) {
+      if (!Util.isNullOrEmpty(currentDbName)) {
         dbname = currentDbName;
       }
     }
@@ -1266,7 +1264,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    */
   private SQLException getInvalidInvocationOnClosedConnectionException() {
     String reason = "No operations allowed after connection closed.";
-    if (!StringUtils.isNullOrEmpty(this.closedReason)) {
+    if (!Util.isNullOrEmpty(this.closedReason)) {
       reason += ("  " + this.closedReason);
     }
     return new SQLException(reason, PSQLState.CONNECTION_DOES_NOT_EXIST.getState());

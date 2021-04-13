@@ -6,17 +6,26 @@
 
 package org.postgresql.util;
 
+import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import software.aws.rds.jdbc.postgresql.ca.HostInfo;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Util {
+
+  private static final Pattern URL_PATTERN = Pattern.compile("^(?<host>.*?)(?::(?<port>[^:]*))?$");
 
   private static @Nullable String shadingPrefix = null;
   private static final Object lockObj = new Object();
@@ -186,5 +195,80 @@ public class Util {
     buffer.append(out.toString());
 
     return buffer.toString();
+  }
+
+  /**
+   * Splits a URL into its host/port components and returns this information as a {@link HostSpec}
+   *
+   * @param url the URL to process
+   * @return a {@link HostSpec} representing the host/port components of the given URL, or null if
+   *         there was a problem parsing the URL
+   */
+  public static @Nullable HostSpec parseUrl(@Nullable String url) {
+    if (isNullOrEmpty(url)) {
+      return null;
+    }
+
+    Matcher matcher = URL_PATTERN.matcher(url);
+    if (!matcher.matches()) {
+      return null;
+    }
+
+    String hostName = matcher.group("host");
+    String portAsString = trim(getUtf(matcher.group("port")));
+
+    if (isNullOrEmpty(hostName)) {
+      return null;
+    }
+
+    int portAsInteger = HostInfo.NO_PORT;
+    if (!isNullOrEmpty(portAsString)) {
+      try {
+        portAsInteger = Integer.parseInt(portAsString);
+      } catch (NumberFormatException e) {
+        return null;
+      }
+    }
+
+    return new HostSpec(hostName, portAsInteger);
+  }
+
+  /**
+   * Convert the supplied URL to UTF string
+   *
+   * @param url the URL to convert
+   * @return the converted URL
+   */
+  private static @Nullable String getUtf(@Nullable String url) {
+    if (isNullOrEmpty(url)) {
+      return url;
+    }
+
+    try {
+      return URLDecoder.decode(url, StandardCharsets.UTF_8.name());
+    } catch (UnsupportedEncodingException e) {
+      return "";
+    }
+  }
+
+  /**
+   * Check if the supplied string is null or empty
+   *
+   * @param s the string to analyze
+   * @return true if the supplied string is null or empty
+   */
+  @EnsuresNonNullIf(expression = "#1", result = false)
+  public static boolean isNullOrEmpty(@Nullable String s) {
+    return s == null || s.equals("");
+  }
+
+  /**
+   * Checks whether or not a string is safe to trim. It checks if the string is empty or null first
+   * before attempting to trim.
+   * @param toTrim The string to safe trim
+   * @return A trimmed string if the string is not null or empty
+   */
+  public static @Nullable String trim(@Nullable String toTrim) {
+    return isNullOrEmpty(toTrim) ? toTrim : toTrim.trim();
   }
 }
