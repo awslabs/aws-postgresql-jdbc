@@ -177,9 +177,9 @@ tasks.configureEach<Jar> {
     }
 }
 
-tasks.jar {
-    archiveClassifier.set("unshaded")
-}
+// tasks.jar {
+//    archiveClassifier.set("unshaded")
+// }
 
 tasks.shadowJar {
     configurations = listOf(shaded)
@@ -202,6 +202,8 @@ tasks.shadowJar {
 }
 
 tasks.register<Jar>("cleanShadowJar") {
+
+    archiveClassifier.set("all")
     dependsOn("shadowJar")
     includeEmptyDirs = false
 
