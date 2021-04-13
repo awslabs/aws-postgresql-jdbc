@@ -19,17 +19,17 @@ public class ConnectionUrlParser {
   private static final Pattern GENERIC_HOST_PTRN = Pattern.compile("^(?<host>.*?)(?::(?<port>[^:]*))?$");
 
   /**
-   * Parses a host:port pair and returns the two elements in a {@link HostSpec}
+   * Splits a URL into its host/port components and returns this information as a {@link HostSpec}
    *
-   * @param hostInfo
-   *            the host:pair to parse
-   * @return a {@link HostSpec} containing the host and port information or null if the host information can't be parsed
+   * @param url the URL to process
+   * @return a {@link HostSpec} representing the host/port components of the given URL, or null if
+   *         there was a problem parsing the URL
    */
-  public static @Nullable HostSpec parseHostPortPair(@Nullable String hostInfo) {
-    if (StringUtils.isNullOrEmpty(hostInfo)) {
+  public static @Nullable HostSpec parseHostPortPair(@Nullable String url) {
+    if (StringUtils.isNullOrEmpty(url)) {
       return null;
     }
-    Matcher matcher = GENERIC_HOST_PTRN.matcher(hostInfo);
+    Matcher matcher = GENERIC_HOST_PTRN.matcher(url);
     if (matcher.matches()) {
       String host = matcher.group("host");
       String portAsString = decode(StringUtils.safeTrim(matcher.group("port")));
@@ -51,21 +51,19 @@ public class ConnectionUrlParser {
   }
 
   /**
-   * URL-decode the given string.
+   * Decode the supplied URL
    *
-   * @param text
-   *            the string to decode
-   * @return
-   *         the decoded string
+   * @param url the URL to decode
+   * @return the decoded URL
    */
-  private static @Nullable String decode(@Nullable String text) {
-    if (StringUtils.isNullOrEmpty(text)) {
-      return text;
+  private static @Nullable String decode(@Nullable String url) {
+    if (StringUtils.isNullOrEmpty(url)) {
+      return url;
     }
     try {
-      return URLDecoder.decode(text, StandardCharsets.UTF_8.name());
+      return URLDecoder.decode(url, StandardCharsets.UTF_8.name());
     } catch (UnsupportedEncodingException e) {
-      // Won't happen.
+      // Ignore - this exception will not occur
     }
     return "";
   }
