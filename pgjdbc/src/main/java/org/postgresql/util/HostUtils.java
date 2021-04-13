@@ -16,7 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HostUtils {
-  private static final Pattern CONNECTION_STRING_PATTERN = Pattern.compile("^(?<host>.*?)(?::(?<port>[^:]*))?$");
+  private static final Pattern URL_PATTERN = Pattern.compile("^(?<host>.*?)(?::(?<port>[^:]*))?$");
 
   /**
    * Splits a URL into its host/port components and returns this information as a {@link HostSpec}
@@ -30,7 +30,7 @@ public class HostUtils {
       return null;
     }
 
-    Matcher matcher = CONNECTION_STRING_PATTERN.matcher(url);
+    Matcher matcher = URL_PATTERN.matcher(url);
     if (!matcher.matches()) {
       return null;
     }
