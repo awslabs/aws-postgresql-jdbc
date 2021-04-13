@@ -178,7 +178,7 @@ tasks.configureEach<Jar> {
 }
 
 tasks.jar {
-    archiveClassifier.set("unshaded")
+//    archiveClassifier.set("unshaded")
 }
 
 tasks.shadowJar {

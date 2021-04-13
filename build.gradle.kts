@@ -119,7 +119,7 @@ releaseParams {
 }
 
 allprojects {
-    group = "org.postgresql"
+    group = "software.aws.rds"
     version = buildVersion
 
     apply(plugin = "com.github.vlsi.gradle-extensions")
@@ -659,7 +659,7 @@ allprojects {
 }
 
 subprojects {
-    if (project.path.startsWith(":postgresql")) {
+    if (project.path.startsWith(":aws-postgresql-jdbc")) {
         plugins.withId("java") {
             configure<JavaPluginExtension> {
                 val sourceSets: SourceSetContainer by project
