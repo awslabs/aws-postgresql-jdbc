@@ -120,9 +120,9 @@ public class Util {
    */
   public static boolean isJdbcPackage(@Nullable String packageName) {
     return packageName != null
-            && (packageName.startsWith("java.sql")
-            || packageName.startsWith("javax.sql")
-            || packageName.startsWith(shadingPrefix("org.postgresql")));
+      && (packageName.startsWith("java.sql")
+      || packageName.startsWith("javax.sql")
+      || packageName.startsWith(shadingPrefix("org.postgresql")));
   }
 
   private static final ConcurrentMap<Class<?>, Class<?>[]> getImplementedInterfacesCache = new ConcurrentHashMap<>();
