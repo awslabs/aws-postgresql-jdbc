@@ -26,15 +26,21 @@ public class ConnectionUrlParser {
    * @return a {@link HostSpec} containing the host and port information or null if the host information can't be parsed
    */
   public static @Nullable HostSpec parseHostPortPair(@Nullable String hostInfo) {
-    if (StringUtils.isNullOrEmpty(hostInfo)) {
+    if (Util.isNullOrEmpty(hostInfo)) {
       return null;
     }
     Matcher matcher = GENERIC_HOST_PTRN.matcher(hostInfo);
     if (matcher.matches()) {
       String host = matcher.group("host");
-      String portAsString = decode(StringUtils.safeTrim(matcher.group("port")));
+
+      String portAsString = matcher.group("port");
+      if (!Util.isNullOrEmpty(portAsString)) {
+        portAsString = portAsString.trim();
+      }
+
+      portAsString = decode(portAsString);
       int portAsInteger = HostInfo.NO_PORT;
-      if (!StringUtils.isNullOrEmpty(portAsString)) {
+      if (!Util.isNullOrEmpty(portAsString)) {
         try {
           portAsInteger = Integer.parseInt(portAsString);
         } catch (NumberFormatException e) {
@@ -59,7 +65,7 @@ public class ConnectionUrlParser {
    *         the decoded string
    */
   private static @Nullable String decode(@Nullable String text) {
-    if (StringUtils.isNullOrEmpty(text)) {
+    if (Util.isNullOrEmpty(text)) {
       return text;
     }
     try {

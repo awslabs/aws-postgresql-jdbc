@@ -6,6 +6,7 @@
 
 package org.postgresql.util;
 
+import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.PrintWriter;
@@ -186,5 +187,16 @@ public class Util {
     buffer.append(out.toString());
 
     return buffer.toString();
+  }
+
+  /**
+   * Check if the supplied string is null or empty
+   *
+   * @param s the string to analyze
+   * @return true if the supplied string is null or empty
+   */
+  @EnsuresNonNullIf(expression = "#1", result = false)
+  public static boolean isNullOrEmpty(@Nullable String s) {
+    return s == null || s.equals("");
   }
 }
