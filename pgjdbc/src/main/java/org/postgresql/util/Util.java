@@ -89,10 +89,7 @@ public class Util {
           return true;
         }
       } catch (Exception ex) {
-        /*
-         * We may experience a NPE from getPackage() returning null, or class-loading facilities.
-         * This happens when this class is instrumented to implement runtime-generated interfaces.
-         */
+        // Ignore any exceptions since they're caused by runtime-generated classes, or due to class load issues.
       }
     }
 
@@ -209,7 +206,7 @@ public class Util {
     }
 
     String hostName = matcher.group("host");
-    String portAsString = trim(getUtf(matcher.group("port")));
+    String portAsString = getUtf(matcher.group("port"));
 
     if (isNullOrEmpty(hostName)) {
       return null;
@@ -218,13 +215,13 @@ public class Util {
     int portAsInteger = HostInfo.NO_PORT;
     if (!isNullOrEmpty(portAsString)) {
       try {
-        portAsInteger = Integer.parseInt(portAsString);
+        portAsInteger = Integer.parseInt(portAsString.trim());
       } catch (NumberFormatException e) {
         return null;
       }
     }
 
-    return new HostSpec(hostName, portAsInteger);
+    return new HostSpec(hostName.trim(), portAsInteger);
   }
 
   /**
@@ -254,15 +251,5 @@ public class Util {
   @EnsuresNonNullIf(expression = "#1", result = false)
   public static boolean isNullOrEmpty(@Nullable String s) {
     return s == null || s.equals("");
-  }
-
-  /**
-   * Checks whether or not a string is safe to trim. It checks if the string is empty or null first
-   * before attempting to trim.
-   * @param toTrim The string to safe trim
-   * @return A trimmed string if the string is not null or empty
-   */
-  public static @Nullable String trim(@Nullable String toTrim) {
-    return isNullOrEmpty(toTrim) ? toTrim : toTrim.trim();
   }
 }
