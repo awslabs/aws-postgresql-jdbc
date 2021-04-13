@@ -12,7 +12,6 @@ import org.postgresql.test.TestUtil;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.Disabled;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -24,7 +23,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
-@Disabled
 public class LoginTimeoutTest {
 
   @Before
@@ -92,9 +90,11 @@ public class LoginTimeoutTest {
       InetAddress localAddr;
       try {
         localAddr = InetAddress.getLocalHost();
+        System.err.println("#1 localAddr=" + localAddr.getHostName() + ", " + localAddr.toString());
       } catch (UnknownHostException ex) {
         System.err.println("WARNING: Could not resolve local host name, trying 'localhost'. " + ex);
         localAddr = InetAddress.getByName("localhost");
+        System.err.println("#2 localAddr=" + localAddr.getHostName() + ", " + localAddr.toString());
       }
       this.listenSocket = new ServerSocket(0, 1, localAddr);
     }
