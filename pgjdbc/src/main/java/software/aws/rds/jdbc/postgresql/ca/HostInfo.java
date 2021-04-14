@@ -131,9 +131,9 @@ public class HostInfo {
   }
 
   /**
-   * Checks if the host-port-pair of a HostInfo is the same as another HostInfo object.
+   * Checks if the host-port-pair of this HostInfo object is the same as another HostInfo object.
    *
-   * @param other The HostInfo you want to compare with
+   * @param other The other HostInfo object, to compare to this HostInfo object
    * @return True if the host-port-pair is equal
    */
   public boolean equalsHostPortPair(@Nullable HostInfo other) {
@@ -155,9 +155,9 @@ public class HostInfo {
   }
 
   /**
-   * Returns a string representation of this object.
+   * Retrieves a textual representation of this {@link HostInfo} object
    *
-   * @return a string representation of this object
+   * @return a string representation of this object.
    */
   @Override
   public String toString() {

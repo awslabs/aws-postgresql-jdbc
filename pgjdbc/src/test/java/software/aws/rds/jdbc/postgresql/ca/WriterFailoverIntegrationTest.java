@@ -22,7 +22,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
-@Disabled
 @TestMethodOrder(MethodOrderer.Alphanumeric.class)
 public class WriterFailoverIntegrationTest extends FailoverIntegrationTest {
 

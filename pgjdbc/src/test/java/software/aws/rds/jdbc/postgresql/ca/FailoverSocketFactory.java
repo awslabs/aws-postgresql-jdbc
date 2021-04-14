@@ -6,6 +6,9 @@
 
 package software.aws.rds.jdbc.postgresql.ca;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+
+import javax.net.SocketFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -14,7 +17,6 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 import java.nio.channels.SocketChannel;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -22,13 +24,12 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-import javax.net.SocketFactory;
-
 /**
  * This is an implementation of SocketFactory. It is only used for testing.
- * The FailoverSocketFactory utilizes a subclass of Sockets called "Hanging Socket"
- * which will act as an intermediate or to the Socket class. This will allow
- * the class to throw a SocketException a connection when a host is marked "down"
+ * The FailoverSocketFactory utilizes a subclass of Sockets called "Hanging Sockets"
+ * which will act as an intermediate to the Socket class. This allows tests to
+ * simulate Socket failures by marking hosts as "down". Attempting to connect to a
+ * host marked as down results in a SocketException
  */
 
 public class FailoverSocketFactory extends SocketFactory {
@@ -37,12 +38,12 @@ public class FailoverSocketFactory extends SocketFactory {
   public static final String STATUS_CONNECTED = "/";
   public static final String STATUS_FAILED = "\\";
 
-  public static final long DEFAULT_TIMEOUT_MILLIS = 1000; // was 60 * 10 * 1000
+  public static final long DEFAULT_TIMEOUT_MILLIS = 1000;
 
   static final Set<String> IMMEDIATELY_DOWNED_HOSTS = new HashSet<>();
   static final List<String> CONNECTION_ATTEMPTS = new LinkedList<>();
 
-  private Properties props;
+  private final Properties props;
 
   public FailoverSocketFactory(Properties info) {
     this.props = info;
@@ -61,22 +62,13 @@ public class FailoverSocketFactory extends SocketFactory {
     return CONNECTION_ATTEMPTS.get(CONNECTION_ATTEMPTS.size() - pos);
   }
 
-  public static List<String> getHostsFromAllConnections() {
-    return getHostsFromLastConnections(CONNECTION_ATTEMPTS.size());
-  }
-
-  public static List<String> getHostsFromLastConnections(int count) {
-    count = Math.abs(count);
-    int lBound = Math.max(0, CONNECTION_ATTEMPTS.size() - count);
-    return CONNECTION_ATTEMPTS.subList(lBound, CONNECTION_ATTEMPTS.size());
-  }
-
   static void sleepMillisForProperty() {
     try {
       Thread.sleep(DEFAULT_TIMEOUT_MILLIS);
     } catch (NumberFormatException e) {
       throw new RuntimeException(e);
     } catch (InterruptedException e) {
+      // ignore
     }
   }
 
@@ -93,8 +85,8 @@ public class FailoverSocketFactory extends SocketFactory {
   }
 
   @Override
-  public Socket createSocket(String host, int port) throws IOException, UnknownHostException {
-    return new HangingSocket(props, host,port);
+  public Socket createSocket(String host, int port) throws IOException {
+    return new HangingSocket(props, host, port);
   }
 
   @Override
@@ -105,13 +97,13 @@ public class FailoverSocketFactory extends SocketFactory {
   @Override
   public Socket createSocket(String host, int port, InetAddress localAdd, int localPort)
       throws IOException {
-    return new HangingSocket(props, host, port, localAdd, localPort);
+    return new HangingSocket(host, port, localAdd, localPort);
   }
 
   @Override
   public Socket createSocket(InetAddress address, int port, InetAddress localAdd, int localPort)
       throws IOException {
-    return new HangingSocket(props,address, port, localAdd, localPort);
+    return new HangingSocket(props, address, port, localAdd, localPort);
   }
 
   @Override
@@ -123,7 +115,7 @@ public class FailoverSocketFactory extends SocketFactory {
   /**
    * The HangingSocket class which is an additional layer to the "socket" class.
    */
-  public class HangingSocket extends Socket {
+  public static class HangingSocket extends Socket {
 
     Socket underlyingSocket;
     String aliasedHostname;
@@ -144,7 +136,7 @@ public class FailoverSocketFactory extends SocketFactory {
       this.props = info;
     }
 
-    public HangingSocket(Properties info, String host, int port, InetAddress localAdd, int localPort)
+    public HangingSocket(String host, int port, InetAddress localAdd, int localPort)
         throws IOException {
       this.underlyingSocket = SocketFactory.getDefault().createSocket(host, port, localAdd, localPort);
     }
@@ -169,9 +161,6 @@ public class FailoverSocketFactory extends SocketFactory {
       try {
         this.underlyingSocket.connect(endpoint, timeout);
         result = STATUS_CONNECTED;
-      } catch (SocketException e) {
-        result = STATUS_FAILED;
-        throw e;
       } catch (IOException e) {
         result = STATUS_FAILED;
         throw e;
@@ -418,14 +407,14 @@ public class FailoverSocketFactory extends SocketFactory {
     }
 
     @Override
-    public int read(byte[] b, int off, int len) throws IOException {
+    public int read(byte @NonNull [] b, int off, int len) throws IOException {
       failIfRequired();
 
       return this.underlyingInputStream.read(b, off, len);
     }
 
     @Override
-    public int read(byte[] b) throws IOException {
+    public int read(byte @NonNull [] b) throws IOException {
       failIfRequired();
 
       return this.underlyingInputStream.read(b);
@@ -471,13 +460,13 @@ public class FailoverSocketFactory extends SocketFactory {
     }
 
     @Override
-    public void write(byte[] b, int off, int len) throws IOException {
+    public void write(byte @NonNull [] b, int off, int len) throws IOException {
       failIfRequired();
       this.underlyingOutputStream.write(b, off, len);
     }
 
     @Override
-    public void write(byte[] b) throws IOException {
+    public void write(byte @NonNull [] b) throws IOException {
       failIfRequired();
       this.underlyingOutputStream.write(b);
     }

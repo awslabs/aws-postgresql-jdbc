@@ -36,9 +36,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A proxy for a dynamic org.postgresql.core.Connection implementation that provides cluster-aware
- * failover features. Connection switching occurs on communication-related exceptions and/or
- * cluster topology changes.
+ * This class is a proxy of org.postgresql.core.BaseConnection that contains functionality to monitor the underlying
+ * connection status and fail over to other DB instances when the connection encounters communications exceptions
+ * or cluster topology changes.
  */
 public class ClusterAwareConnectionProxy implements InvocationHandler {
   static final String METHOD_ABORT = "abort";
@@ -99,13 +99,13 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   protected @Nullable Throwable lastExceptionDealtWith = null;
 
   /**
-   * Instantiates a new AuroraConnectionProxy for the given host and properties.
+   * Constructor for ClusterAwareConnectionProxy
    *
-   * @param hostSpec The HostSpec info for the host to connect to
-   * @param props The Properties specifying the connection and failover configuration
+   * @param hostSpec The {@link HostSpec} information for the desired connection
+   * @param props The {@link Properties} specifying the connection and failover configuration
    * @param url The URL to connect to
    *
-   * @throws SQLException if an error occurs
+   * @throws SQLException if an error occurs while creating this instance
    */
   public ClusterAwareConnectionProxy(HostSpec hostSpec, Properties props, String url) throws SQLException {
     this.originalUrl = url;
@@ -233,11 +233,10 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   /**
    * Initializes the connection proxy
    *
-   *
-   * @param hostSpec The HostSpec info for the host to connect to
+   * @param hostSpec The {@link HostSpec} info for the desired connection
    * @param props The {@link Properties} specifying the connection and failover configuration
    * @param url The URL to connect to
-   * @throws SQLException if an error occurs
+   * @throws SQLException if an error occurs while attempting to initialize the proxy connection
    */
   @RequiresNonNull({"this.topologyService", "this.connectionProvider", "this.writerFailoverHandler", "this.readerFailoverHandler", "this.rdsDnsAnalyzer", "this.initialConnectionProps", "this.metrics", "this.hosts"})
   private synchronized void initProxy(@UnderInitialization ClusterAwareConnectionProxy this, HostSpec hostSpec, Properties props,
@@ -271,12 +270,12 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Initializes connection from host pattern
+   * Initializes the connection proxy using the user-configured host pattern setting
    *
-   * @param connectionStringHostSpec The HostSpec info for the host to connect to
+   * @param connectionStringHostSpec The {@link HostSpec} info for the desired connection
    * @param props The {@link Properties} specifying the connection and failover configuration
    * @param url The URL to connect to
-   * @throws SQLException if an error occurs
+   * @throws SQLException if an error occurs while attempting to initialize the proxy connection
    */
   @RequiresNonNull({"this.topologyService", "this.connectionProvider", "this.writerFailoverHandler", "this.readerFailoverHandler", "this.rdsDnsAnalyzer", "this.initialConnectionProps", "this.metrics", "this.hosts"})
   private void initFromHostPatternSetting(@UnderInitialization ClusterAwareConnectionProxy this,
@@ -295,16 +294,16 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Retrieves the host and port number from host pattern
+   * Retrieves the host and port number from the user-configured host pattern setting
    *
    * @return A {@link HostSpec} object containing the host and port number
-   * @throws SQLException if an error occurs
+   * @throws SQLException if an invalid value was used for the host pattern setting
    */
   @RequiresNonNull("this.rdsDnsAnalyzer")
   private HostSpec getHostSpecFromHostPatternSetting(@UnderInitialization ClusterAwareConnectionProxy this) throws SQLException {
     HostSpec hostSpec = Util.parseUrl(this.clusterInstanceHostPatternSetting);
     if (hostSpec == null) {
-      throw new SQLException("Invalid value in 'clusterInstanceHostPattern' configuration property.");
+      throw new SQLException("Invalid value in 'clusterInstanceHostPattern' configuration setting - the value could not be parsed");
     }
     validateHostPatternSetting(hostSpec);
     return hostSpec;
@@ -321,7 +320,9 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
     String hostPattern = hostSpec.getHost();
 
     if (!isDnsPatternValid(hostPattern)) {
-      String invalidDnsPatternError = "Invalid value set for the 'clusterInstanceHostPattern' configuration property.";
+      String invalidDnsPatternError = "Invalid value set for the 'clusterInstanceHostPattern' configuration setting - "
+              + "the host pattern must contain a '?' character as a placeholder for the DB instance identifiers of the "
+              + "instances in the cluster";
       LOGGER.log(Level.SEVERE, invalidDnsPatternError);
       throw new SQLException(invalidDnsPatternError);
     }
@@ -329,14 +330,14 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
     identifyRdsType(hostPattern);
     if (this.isRdsProxy) {
       String rdsProxyInstancePatternError =
-              "RDS Proxy url can't be used for the 'clusterInstanceHostPattern' configuration property";
+              "An RDS Proxy url can't be used as the 'clusterInstanceHostPattern' configuration setting.";
       LOGGER.log(Level.SEVERE, rdsProxyInstancePatternError);
       throw new SQLException(rdsProxyInstancePatternError);
     }
 
     if (this.rdsDnsAnalyzer.isRdsCustomClusterDns(hostPattern)) {
       String rdsCustomClusterInstancePatternError =
-              "RDS Custom Cluster endpoint can't be used for the 'clusterInstanceHostPattern' configuration property";
+              "An RDS Custom Cluster endpoint can't be used as the 'clusterInstanceHostPattern' configuration setting";
       LOGGER.log(Level.SEVERE, rdsCustomClusterInstancePatternError);
       throw new SQLException(rdsCustomClusterInstancePatternError);
     }
@@ -367,12 +368,16 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Initializes connection without expecting a current topology
+   * Initializes the connection proxy expecting that the connection does not provide cluster information. This occurs when the
+   * connection is to an IP address, custom domain, or non-RDS instance. In the first two cases, if cluster information
+   * does exist, the user should have set the clusterInstanceHostPattern setting to enable use of the topology. An
+   * exception will be thrown if this method is called but topology information was retrieved using the connection.
    *
-   * @param hostSpec The HostSpec info for the host to connect to
+   * @param hostSpec The {@link HostSpec} containing the information for the desired connection
    * @param props The {@link Properties} specifying the connection and failover configuration
    * @param url The URL to connect to
-   * @throws SQLException if an error occurs
+   * @throws SQLException if an error occurs while establishing the connection proxy, or if topology information was
+   *         retrieved while establishing the connection
    */
   @RequiresNonNull({"this.topologyService", "this.connectionProvider", "this.writerFailoverHandler", "this.readerFailoverHandler", "this.rdsDnsAnalyzer", "this.initialConnectionProps", "this.metrics", "this.hosts"})
   private void initExpectingNoTopology(@UnderInitialization ClusterAwareConnectionProxy this, HostSpec hostSpec,
@@ -383,20 +388,21 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
 
     if (this.isClusterTopologyAvailable) {
       String instanceHostPatternRequiredError =
-              "The 'clusterInstanceHostPattern' configuration property is required when an IP address or custom "
-                      + "domain is used to connect to the cluster.";
+              "The 'clusterInstanceHostPattern' configuration property is required when an IP address or custom domain "
+              + "is used to connect to a cluster that provides topology information. If you would instead like to connect "
+              + "without failover functionality, set the 'enableClusterAwareFailover' configuration property to false.";
       LOGGER.log(Level.SEVERE, instanceHostPatternRequiredError);
       throw new SQLException(instanceHostPatternRequiredError);
     }
   }
 
   /**
-   * Initializes connection from string
+   * Initializes the connection proxy using a connection URL
    *
-   * @param hostSpec The HostSpec info for the host to connect to
+   * @param hostSpec The {@link HostSpec} containing the information for the desired connection
    * @param props The {@link Properties} specifying the connection and failover configuration
    * @param url The URL to connect to
-   * @throws SQLException If an error occurs
+   * @throws SQLException If an error occurs while establishing the connection proxy
    */
   @RequiresNonNull({"this.topologyService", "this.connectionProvider", "this.writerFailoverHandler", "this.readerFailoverHandler", "this.rdsDnsAnalyzer", "this.initialConnectionProps", "this.metrics", "this.hosts"})
   private void initFromConnectionString(@UnderInitialization ClusterAwareConnectionProxy this, HostSpec hostSpec, Properties props, String url) throws SQLException {
@@ -439,7 +445,8 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Creates an instance template for the topology service
+   * Creates an instance template that the topology service will use to form topology information for each
+   * instance in the cluster
    *
    * @param host The new host for the {@link HostInfo} object
    * @param port The port for the connection
@@ -450,12 +457,12 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Creates a connection and initializes the topology
+   * Creates a connection and establishes topology information for connections that provide it
    *
-   * @param hostSpec The HostSpec info for the host to connect to
+   * @param hostSpec The {@link HostSpec} containing the information for the desired connection
    * @param props The {@link Properties} specifying the connection and failover configuration
    * @param url The URL to connect to
-   * @throws SQLException if an error occurs
+   * @throws SQLException if an error occurs while establishing the connection proxy
    */
   @RequiresNonNull({"this.topologyService", "this.connectionProvider", "this.writerFailoverHandler", "this.readerFailoverHandler", "this.rdsDnsAnalyzer", "this.initialConnectionProps", "this.metrics", "this.hosts"})
   private synchronized void createConnectionAndInitializeTopology(@UnderInitialization ClusterAwareConnectionProxy this,
@@ -500,17 +507,16 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
     }
 
     if (!isConnected()) {
-      // Either URL was not a cluster endpoint or cached topology did not exist - connect directly
-      // to URL
+      // Either URL was not a cluster endpoint or cached topology did not exist - connect directly to URL
       this.currentConnection = this.connectionProvider.connect(hostSpec, props, url);
     }
     return connectedUsingCachedTopology;
   }
 
   /**
-   * Checks if there is a underlying connection for this proxy.
+   * Checks if the connection proxied by this class is open and usable
    *
-   * @return true if there is a connection
+   * @return true if the connection is open and usable
    */
   synchronized boolean isConnected(@UnknownInitialization ClusterAwareConnectionProxy this) {
     try {
@@ -521,9 +527,9 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Attempts a connection using a cached topology
+   * Attempts a connection using cached topology information
    *
-   * @throws SQLException if an error occurs
+   * @throws SQLException if an error occurs while establishing the connection
    */
   @RequiresNonNull({"this.initialConnectionProps", "this.topologyService", "this.connectionProvider"})
   private void attemptConnectionUsingCachedTopology(@UnderInitialization ClusterAwareConnectionProxy this) throws SQLException {
@@ -538,9 +544,9 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Retrieves a host for initial connection
+   * Retrieves a host to use for the initial connection
    *
-   * @return {@link HostInfo} for a candidate host
+   * @return {@link HostInfo} for a candidate to use for the initial connection
    */
   @RequiresNonNull({"this.hosts", "this.topologyService"})
   private @Nullable HostInfo getCandidateHostForInitialConnection(@UnderInitialization ClusterAwareConnectionProxy this) {
@@ -554,9 +560,9 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Retrieves a reader for initial connection
+   * Retrieves a reader to use for the initial connection
    *
-   * @return {@link HostInfo} for a candidate reader
+   * @return {@link HostInfo} for a reader candidate to use for the initial connection
    */
   @RequiresNonNull({"this.topologyService", "this.hosts"})
   private @Nullable HostInfo getCandidateReaderForInitialConnection(@UnderInitialization ClusterAwareConnectionProxy this) {
@@ -569,10 +575,10 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Checks if the topology in the proxy class contains a host
+   * Checks if the topology information contains the given host
    *
-   * @param host The host to check
-   * @return True if the host is part of the topology
+   * @param host the host to check
+   * @return true if the host exists in the topology
    */
   @RequiresNonNull({"this.hosts"})
   private boolean topologyContainsHost(@UnderInitialization ClusterAwareConnectionProxy this, @Nullable HostInfo host) {
@@ -590,7 +596,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   /**
    * Checks if the cluster contains a reader
    *
-   * @return True if there are readers in the cluster
+   * @return true if there are readers in the cluster
    */
   @RequiresNonNull({"this.hosts"})
   private boolean clusterContainsReader(@UnknownInitialization ClusterAwareConnectionProxy this)  {
@@ -598,7 +604,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Retrieves a random host from topology
+   * Retrieves a random host from the topology
    *
    * @return A random {@link HostInfo} from the topology
    */
@@ -611,10 +617,11 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Initializes topology
+   * Initializes topology information for the database we have connected to, when it is available
    *
-   * @param hostSpec The current host to connect if the proxy does not hae a current host
-   * @param connectedUsingCachedTopology True if connection is using a cached topology
+   * @param hostSpec The {@link HostSpec} that we used to establish the current connection
+   * @param connectedUsingCachedTopology a boolean representing whether the current connection was established using
+   *                                     cached topology information
    */
   @RequiresNonNull({"this.topologyService", "this.rdsDnsAnalyzer", "this.hosts"})
   private synchronized void initTopology(@UnderInitialization ClusterAwareConnectionProxy this, HostSpec hostSpec,
@@ -636,11 +643,12 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Updates the current host in the class. Will set the currentHost to null if the hostSpec is not
-   * part of the cluster
+   * Updates the current host in the class. Will set the currentHost to null if the given hostSpec does not specify
+   * the writer cluster and does not exist in the topology information.
    *
-   * @param hostSpec The current host to set as current
-   * @param connectedUsingCachedTopology True if connected using a cached topology
+   * @param hostSpec The {@link HostSpec} that we used to establish the current connection
+   * @param connectedUsingCachedTopology a boolean representing whether the current connection was established using
+   *                                     cached topology information
    */
   @RequiresNonNull({"this.hosts", "this.rdsDnsAnalyzer"})
   private void updateInitialHost(@UnderInitialization ClusterAwareConnectionProxy this, HostSpec hostSpec,
@@ -660,10 +668,11 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Finalizing the connection
+   * If failover is enabled, validate that the current connection is valid
    *
-   * @param connectedUsingCachedTopology True if connection is using cached topology
-   * @throws SQLException if an error occurs
+   * @param connectedUsingCachedTopology a boolean representing whether the current connection was established using
+   *                                     cached topology information
+   * @throws SQLException if an error occurs while validating the connection
    */
   @RequiresNonNull({"this.topologyService", "this.connectionProvider", "this.writerFailoverHandler", "this.readerFailoverHandler", "this.initialConnectionProps", "this.metrics", "this.hosts"})
   private void finalizeConnection(@UnderInitialization ClusterAwareConnectionProxy this,
@@ -692,9 +701,12 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Validates initial connection
+   * Validates the initial connection by making sure that we are connected and that we are not connected to a reader
+   * instance using a read-write connection, which could happen if we used stale cached topology information to establish
+   * the connection.
    *
-   * @param connectedUsingCachedTopology True if using cached topology
+   * @param connectedUsingCachedTopology a boolean representing whether the current connection was established using
+   *                                     cached topology information
    * @throws SQLException if an error occurs during failover
    */
   @RequiresNonNull({"this.initialConnectionProps", "this.topologyService", "this.metrics", "this.readerFailoverHandler", "this.writerFailoverHandler", "this.connectionProvider", "this.hosts"})
@@ -721,9 +733,9 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    * connected to a host that was marked as a writer in the cache but is in fact a reader according
    * to the fresh topology. This could happen if the cached topology was stale.
    *
-   * @param connectedUsingCachedTopology Boolean indicating if we established the initial connection
-   *          using cached topology information
-   * @return True if we expected to be connected to a writer according to cached topology information,
+   * @param connectedUsingCachedTopology a boolean representing whether the current connection was established using
+   *                                     cached topology information
+   * @return Ttue if we expected to be connected to a writer according to cached topology information,
    *         but that information was stale and we are actually incorrectly connected to a reader
    */
   private boolean invalidCachedWriterConnection(@UnderInitialization ClusterAwareConnectionProxy this,
@@ -770,7 +782,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Checks if there should be an attempt to connect to a reader
+   * Checks if we should attempt failover to a reader instance in {@link #pickNewConnection(boolean)}
    *
    * @return True if a reader exists and the connection is read-only
    */
@@ -780,13 +792,13 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Connects this dynamic failover connection proxy to the given host
+   * Connect to the host specified by the given {@link HostInfo} and set the resulting connection as the underlying connection
+   * for this proxy
    *
    * @param host The {@link HostInfo} representing the host to connect to
    *
-   * @throws SQLException if an error occurs
+   * @throws SQLException if an error occurs while connecting
    */
-
   @RequiresNonNull({"this.initialConnectionProps", "this.connectionProvider"})
   private synchronized void connectTo(@UnknownInitialization ClusterAwareConnectionProxy this, HostInfo host) throws SQLException {
     try {
@@ -815,13 +827,13 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Creates a new physical connection for the given {@link HostInfo}.
+   * Creates a connection to the host specified by the given {@link HostInfo}
    *
-   * @param hostInfo The host info instance
+   * @param hostInfo the {@link HostInfo} specifying the host to connect to
    * @param props The properties that should be passed to the new connection
    *
-   * @return The new Connection instance
-   * @throws SQLException if an error occurs
+   * @return a connection to the given host
+   * @throws SQLException if an error occurs while connecting to the given host
    */
   @RequiresNonNull({"this.connectionProvider"})
   protected synchronized @Nullable BaseConnection createConnectionForHost(
@@ -838,7 +850,8 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Invalidates the current connection.
+   * Attempt rollback if the current connection is in a transaction, then close the connection. Rollback may not be
+   * possible as the current connection might be broken or closed when this method is called.
    */
   private synchronized void invalidateCurrentConnection(@UnknownInitialization ClusterAwareConnectionProxy this) {
     if (this.currentConnection == null) {
@@ -859,9 +872,9 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Invalidates the specified connection by closing it.
+   * Close the given connection if it is not already closed
    *
-   * @param conn The connection instance to invalidate
+   * @param conn the connection to close
    */
   protected synchronized void invalidateConnection(@UnknownInitialization ClusterAwareConnectionProxy this,
                                                    @Nullable BaseConnection conn) {
@@ -870,18 +883,20 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
         conn.close();
       }
     } catch (SQLException e) {
-      // swallow this exception, current connection should be useless anyway.
+      // ignore
     }
   }
 
   /**
-   * Synchronizes session state between two connections, allowing to override the read-only status.
+   * Set the target connection read-only status according to the given parameter, and the autocommit and transaction
+   * isolation status according to the source connection state.
    *
-   * @param source The connection where to get state from
-   * @param target The connection where to set state
+   * @param source the source connection that holds the desired state for the target connection
+   * @param target the target connection that should hold the desired state from the source connection at the end of this
+   *               method call
    * @param readOnly The new read-only status
    *
-   * @throws SQLException if an error occurs
+   * @throws SQLException if an error occurs while setting the target connection's state
    */
   protected void syncSessionState(@UnknownInitialization ClusterAwareConnectionProxy this, @Nullable BaseConnection source,
                                   @Nullable BaseConnection target, boolean readOnly) throws SQLException {
@@ -898,11 +913,12 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Initiates a default failover procedure starting at the given host index. This process tries to
-   * connect, sequentially, to the next host in the list. The primary host may or may not be
-   * excluded from the connection attempts.
+   * Initiates the failover procedure. This process tries to establish a new connection to an instance in the topology.
+   * The primary host may or may not be excluded from the connection attempts.
    *
-   * @throws SQLException if an error occurs during failover
+   * @throws SQLException upon successful failover to indicate that failover has occurred and session state should be
+   *                      reconfigured by the user. May also throw a SQLException if failover is unsuccessful.
+   *
    */
   @RequiresNonNull({"this.topologyService", "this.initialConnectionProps", "this.readerFailoverHandler", "this.writerFailoverHandler", "this.metrics", "this.connectionProvider", "this.hosts"})
   protected synchronized void failover(@UnknownInitialization ClusterAwareConnectionProxy this) throws SQLException {
@@ -933,16 +949,16 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   /**
    * Checks if the driver should conduct a writer failover
    *
-   * @return True if the connection is not explicitly read only
+   * @return true if the connection is not explicitly read only
    */
   private boolean shouldPerformWriterFailover(@UnknownInitialization ClusterAwareConnectionProxy this) {
     return !this.explicitlyReadOnly;
   }
 
   /**
-   * Initiates writer failover procedure
+   * Initiates the writer failover procedure
    *
-   * @throws SQLException If failover failed
+   * @throws SQLException if failover was unsuccessful
    */
   @RequiresNonNull({"this.topologyService", "this.initialConnectionProps", "this.writerFailoverHandler", "this.metrics", "this.hosts"})
   protected void failoverWriter(@UnknownInitialization ClusterAwareConnectionProxy this) throws SQLException {
@@ -991,9 +1007,9 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Initiates reader failover procedure
+   * Initiates the reader failover procedure
    *
-   * @throws SQLException If failover failed
+   * @throws SQLException if failover was unsuccessful
    */
   @RequiresNonNull({"this.topologyService", "this.initialConnectionProps", "this.readerFailoverHandler", "this.metrics", "this.writerFailoverHandler", "this.connectionProvider", "this.hosts"})
   protected void failoverReader(@UnknownInitialization ClusterAwareConnectionProxy this) throws SQLException {
@@ -1023,9 +1039,10 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Method that handles whether or not a topology needs to be updated and if a new connection is needed
+   * Method that updates the topology when necessary and establishes a new connection if the proxy is not connected or
+   * the current host is not found in the new topology.
    *
-   * @param forceUpdate If an update must occur
+   * @param forceUpdate a boolean used to force an update instead of the default behavior of updating only when necessary
    * @throws SQLException if an error occurs fetching the topology or while conducting failover
    */
   @RequiresNonNull({"this.initialConnectionProps", "this.topologyService", "this.metrics", "this.readerFailoverHandler", "this.writerFailoverHandler", "this.connectionProvider", "this.hosts"})
@@ -1091,32 +1108,33 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Checks if proxy is connected to RDS-hosted cluster.
+   * Checks if this proxy is connected to an RDS-hosted cluster.
    *
-   * @return true if proxy is connected to RDS-hosted cluster
+   * @return true if this proxy is connected to an RDS-hosted cluster
    */
   public boolean isRds() {
     return this.isRds;
   }
 
   /**
-   * Checks if proxy is connected to cluster through RDS proxy.
+   * Checks if this proxy is connected to a cluster using RDS proxy.
    *
-   * @return true if proxy is connected to cluster through RDS proxy
+   * @return true if this proxy is connected to a cluster using RDS proxy
    */
   public synchronized boolean isRdsProxy() {
     return this.isRdsProxy;
   }
 
   /**
-   * Proxies method invocation on connection object. Called when a method is called on the connection object.
-   * Changes member variables depending on the Method parameter and initiates failover if needed.
+   * Invoke a method on the connection underlying this proxy. Called automatically when a method is called against the
+   * proxied connection. Member variables are changed depending on the method parameter and failover is initiated if
+   * a communications problem occurs while executing the invocation.
    *
-   * @param proxy The proxy object
+   * @param proxy The proxied connection
    * @param method The method being called
    * @param args The arguments to the method
    * @return The results of the method call
-   * @throws Throwable if an error occurs
+   * @throws Throwable if an error occurs while invoking the method against the proxy
    */
   public synchronized @Nullable Object invoke(Object proxy, Method method, @Nullable Object[] args) throws Throwable {
     this.invokeStartTimeMs = this.gatherPerfMetricsSetting ? System.currentTimeMillis() : 0;
@@ -1170,11 +1188,11 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Checks if the given method is allowed on closed connections.
+   * Checks whether the given method can be executed against a closed connection
    *
-   * @param method method name to check
+   * @param method the method to check
    *
-   * @return true if the given method is allowed on closed connections
+   * @return true if the given method can be executed against a closed connection
    */
   protected boolean allowedOnClosedConnection(Method method) {
     String methodName = method.getName();
@@ -1194,7 +1212,6 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    */
   private @Nullable Object executeMethodWithoutForwarding(String methodName, @Nullable Object[] args) throws Throwable {
     if (METHOD_EQUALS.equals(methodName) && args != null && args.length > 0 && args[0] != null) {
-      // Let args[0] "unwrap" to its InvocationHandler if it is a proxy.
       return args[0].equals(this);
     }
 
@@ -1233,9 +1250,9 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Closes current connection.
+   * Close the current connection if it exists
    *
-   * @throws SQLException if an error occurs
+   * @throws SQLException if an error occurs while closing the connection
    */
   protected synchronized void doClose() throws SQLException {
     if (this.currentConnection != null) {
@@ -1244,12 +1261,12 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Aborts current connection using the given executor.
+   * Abort the current connection if it exists
    *
    * @param executor  The {@link Executor} implementation which will
    *      be used by abort
    *
-   * @throws SQLException if an error occurs
+   * @throws SQLException if an error occurs while aborting the current connection
    */
   protected synchronized void doAbort(Executor executor) throws SQLException {
     if (this.currentConnection != null) {
@@ -1271,12 +1288,12 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Deals with InvocationException from proxied objects.
+   * Analyze the given exception and initiate failover if required, then throw the exception
    *
-   * @param e The Exception instance to check
-   *
-   * @throws Throwable if an error occurs
-   * @throws InvocationTargetException if an error occurs
+   * @param e the {@link InvocationTargetException} to analyze
+   * @throws Throwable when the given exception contains a target exception, failover occurs, or another error is
+   *                   encountered while handling the exception
+   * @throws InvocationTargetException when the given exception does not contain a target exception
    */
   protected synchronized void dealWithInvocationException(InvocationTargetException e)
           throws Throwable, InvocationTargetException {
@@ -1284,18 +1301,19 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   *  Deals with illegal state exception from proxied objects.
+   * Analyze the given exception and initiate failover if required, then throw the exception
    *
-   * @param e The Exception instance to check
-   * @throws Throwable if an error occurs
+   * @param e the {@link IllegalStateException} to analyze
+   * @throws Throwable this error or the cause of this error. May also throw an error if failover occurs or another error
+   *                   is encountered while handling the exception
    */
   protected void dealWithIllegalStateException(IllegalStateException e) throws Throwable {
     dealWithOriginalException(e.getCause(), e);
   }
 
   /**
-   * Method used to deal with the exception. Will decide if failover should happen, if the original
-   * exception should be thrown or if the wrapper exception should be thrown.
+   * Method used to deal with an exception. Will decide if failover should happen, if the original
+   * exception should be thrown, or if the wrapper exception should be thrown.
    *
    * @param originalException The original cause of the exception
    * @param wrapperException The exception that wraps the original exception
@@ -1330,7 +1348,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    * Checks whether or not the exception should result in failing over to a new connection
    *
    * @param t The exception to check
-   * @return True if failover should happen
+   * @return True if failover should be initiated
    */
   protected boolean shouldExceptionTriggerConnectionSwitch(Throwable t) {
 
@@ -1345,7 +1363,6 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
     }
 
     if (sqlState != null) {
-      // connection error
       return PSQLState.isConnectionError(sqlState) || PSQLState.COMMUNICATION_ERROR.getState().equals(sqlState);
     }
 
@@ -1381,10 +1398,10 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Checks if it's required to connect to a writer
+   * Connect to the writer if setReadOnly(false) was called and we are currently connected to a reader instance.
    *
-   * @param originalReadOnlyValue Original value of read only
-   * @param newReadOnlyValue The new value of read only
+   * @param originalReadOnlyValue the original read-only value, before setReadOnly was called
+   * @param newReadOnlyValue the new read-only value, as passed to the setReadOnly call
    *
    * @throws SQLException if {@link #failover()} is invoked
    */
@@ -1407,16 +1424,16 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    * Checks if the connection needs to be switched to a writer connection when setReadOnly(false) is called. This should
    * only be true the read only value was switched from true to false and we aren't connected to a writer.
    *
-   * @param originalReadOnlyValue Original value of read only
-   * @param newReadOnlyValue The new value of read only
-   * @return If the connection should reconnect to the writer instance according to the setReadOnly call
+   * @param originalReadOnlyValue the original read-only value, before setReadOnly was called
+   * @param newReadOnlyValue the new read-only value, as passed to the setReadOnly call
+   * @return true if we should reconnect to the writer instance, according to the setReadOnly call
    */
   private boolean shouldReconnectToWriter(boolean originalReadOnlyValue, boolean newReadOnlyValue) {
     return originalReadOnlyValue && !newReadOnlyValue && (this.currentHost == null || !this.currentHost.isWriter());
   }
 
   /**
-   * Check if the captured exception must be wrapped by an unchecked exception, and perform the wrapping if so
+   * Wrap the given throwable in an IllegalStateException if required; otherwise, just return the throwable
    *
    * @param method The method that was being invoked when the given exception occurred
    * @param e The exception that occurred while invoking the given method
@@ -1480,7 +1497,9 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Proxy class to intercept and deal with errors that may occur in any object bound to the current connection.
+   * This class is a proxy for objects created through the proxied connection (for example, {@link java.sql.Statement} and
+   * {@link java.sql.ResultSet}. Similarly to ClusterAwareConnectionProxy, this proxy class monitors the underlying object
+   * for communications exceptions and initiates failover when required.
    */
   class JdbcInterfaceProxy implements InvocationHandler {
     Object invokeOn;
@@ -1491,7 +1510,6 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
 
     public @Nullable Object invoke(Object proxy, Method method, @Nullable Object[] args) throws Throwable {
       if (METHOD_EQUALS.equals(method.getName()) && args != null && args[0] != null) {
-        // Let args[0] "unwrap" to its InvocationHandler if it is a proxy.
         return args[0].equals(this);
       }
 
@@ -1513,13 +1531,15 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * If the given return type is or implements a JDBC interface, proxies the given object so that we can catch SQL
-   * errors and fire a connection switch.
+   * Checks whether the return type of an invoked method implements or is a JDBC interface, and
+   * returns a proxy of the object returned by the method if so. This is done so that we can monitor the
+   * object for communications exceptions and initiate failovers when required (see JdbcInterfaceProxy).
    *
-   * @param returnType The type the object instance to proxy is supposed to be
-   * @param toProxy The object instance to proxy
+   * @param returnType the return type of the invoked method
+   * @param toProxy the object returned by the invoked method
    *
-   * @return The proxied object or the original one if it does not implement a JDBC interface
+   * @return a proxy of the object returned by the invoked method, if it implements or is
+   *         a JDBC interface. Otherwise, simply returns the object itself.
    */
   protected @Nullable Object proxyIfReturnTypeIsJdbcInterface(Class<?> returnType, @Nullable Object toProxy) {
     if (toProxy != null) {
@@ -1527,19 +1547,9 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
         Class<?> toProxyClass = toProxy.getClass();
         return Proxy.newProxyInstance(toProxyClass.getClassLoader(),
                 Util.getImplementedInterfaces(toProxyClass),
-                getNewJdbcInterfaceProxy(toProxy));
+                new JdbcInterfaceProxy(toProxy));
       }
     }
     return toProxy;
-  }
-
-  /**
-   * Method to handle invocations
-   *
-   * @param toProxy The object to proxy
-   * @return A {@link JdbcInterfaceProxy} that returns the result of the invocation
-   */
-  protected InvocationHandler getNewJdbcInterfaceProxy(Object toProxy) {
-    return new JdbcInterfaceProxy(toProxy);
   }
 }
