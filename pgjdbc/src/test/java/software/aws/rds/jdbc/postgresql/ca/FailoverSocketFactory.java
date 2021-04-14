@@ -8,7 +8,6 @@ package software.aws.rds.jdbc.postgresql.ca;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 
-import javax.net.SocketFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,6 +22,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+
+import javax.net.SocketFactory;
 
 /**
  * This is an implementation of SocketFactory. It is only used for testing.
