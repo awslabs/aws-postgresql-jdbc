@@ -914,7 +914,6 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
 
   /**
    * Initiates the failover procedure. This process tries to establish a new connection to an instance in the topology.
-   * The writer host may or may not be excluded from the connection attempts.
    *
    * @throws SQLException upon successful failover to indicate that failover has occurred and session state should be
    *                      reconfigured by the user. May also throw a SQLException if failover is unsuccessful.
