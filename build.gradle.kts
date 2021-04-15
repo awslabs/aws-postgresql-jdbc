@@ -634,7 +634,7 @@ allprojects {
                         licenses {
                             license {
                                 name.set("BSD-2-Clause")
-                                url.set("https://https://opensource.org/licenses/BSD-2-Clause")
+                                url.set("https://opensource.org/licenses/BSD-2-Clause")
                             }
                         }
                         developers {
