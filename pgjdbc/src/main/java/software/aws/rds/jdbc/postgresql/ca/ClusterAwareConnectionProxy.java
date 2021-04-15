@@ -25,7 +25,6 @@ import org.postgresql.util.Util;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -96,7 +95,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   protected int failoverConnectTimeout; //sec
   protected int failoverSocketTimeout; //sec
 
-  protected @Nullable Throwable lastExceptionDealtWith = null;
+  protected @Nullable Throwable lastHandledException = null;
 
   /**
    * Constructor for ClusterAwareConnectionProxy
@@ -538,7 +537,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       this.hosts = cachedHosts;
       HostInfo candidateHost = getCandidateHostForInitialConnection();
       if (candidateHost != null) {
-        connectTo(candidateHost);
+        connectToHost(candidateHost);
       }
     }
   }
@@ -713,7 +712,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   private synchronized void validateInitialConnection(@UnderInitialization ClusterAwareConnectionProxy this,
                                                       boolean connectedUsingCachedTopology) throws SQLException {
     if (!isConnected()) {
-      pickNewConnection(true);
+      switchConnection(true);
       return;
     }
 
@@ -722,7 +721,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
     }
 
     try {
-      connectTo(this.hosts.get(WRITER_CONNECTION_INDEX));
+      connectToHost(this.hosts.get(WRITER_CONNECTION_INDEX));
     } catch (SQLException e) {
       failover();
     }
@@ -754,8 +753,8 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    * @throws SQLException if failover fails
    */
   @RequiresNonNull({"this.initialConnectionProps", "this.topologyService", "this.metrics", "this.readerFailoverHandler", "this.writerFailoverHandler", "this.connectionProvider", "this.hosts"})
-  protected synchronized void pickNewConnection(@UnknownInitialization ClusterAwareConnectionProxy this,
-                                                boolean inInitialization) throws SQLException {
+  protected synchronized void switchConnection(@UnknownInitialization ClusterAwareConnectionProxy this,
+                                               boolean inInitialization) throws SQLException {
     if (this.isClosed && this.closedExplicitly) {
       LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Connection was closed by the user");
       return;
@@ -772,7 +771,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
     }
 
     try {
-      connectTo(this.hosts.get(WRITER_CONNECTION_INDEX));
+      connectToHost(this.hosts.get(WRITER_CONNECTION_INDEX));
       if (this.explicitlyReadOnly) {
         topologyService.setLastUsedReaderHost(this.currentHost);
       }
@@ -782,7 +781,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
   }
 
   /**
-   * Checks if we should attempt failover to a reader instance in {@link #pickNewConnection(boolean)}
+   * Checks if we should attempt failover to a reader instance in {@link #switchConnection(boolean)}
    *
    * @return True if a reader exists and the connection is read-only
    */
@@ -800,7 +799,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    * @throws SQLException if an error occurs while connecting
    */
   @RequiresNonNull({"this.initialConnectionProps", "this.connectionProvider"})
-  private synchronized void connectTo(@UnknownInitialization ClusterAwareConnectionProxy this, HostInfo host) throws SQLException {
+  private synchronized void connectToHost(@UnknownInitialization ClusterAwareConnectionProxy this, HostInfo host) throws SQLException {
     try {
       BaseConnection connection = createConnectionForHost(host, this.initialConnectionProps);
       LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Connected to: {0}", host);
@@ -1052,7 +1051,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
     }
 
     if (!isConnected()) {
-      pickNewConnection(false);
+      switchConnection(false);
       return;
     }
 
@@ -1098,7 +1097,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       // current connection host isn't found in the latest topology
       // switch to another connection;
       this.currentHost = null;
-      pickNewConnection(false);
+      switchConnection(false);
     } else {
       // found the same node at different position in the topology
       // adjust current host only; connection is still valid
@@ -1153,11 +1152,11 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       Object result = null;
       try {
         result = method.invoke(this.currentConnection, args);
-        result = proxyIfReturnTypeIsJdbcInterface(method.getReturnType(), result);
+        result = wrapWithProxyIfNeeded(method.getReturnType(), result);
       } catch (InvocationTargetException e) {
-        dealWithInvocationException(e);
+        processInvocationException(e);
       } catch (IllegalStateException e) {
-        dealWithIllegalStateException(e);
+        processIllegalStateException(e);
       }
 
       performSpecialMethodHandlingIfRequired(methodName, args);
@@ -1294,9 +1293,9 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    *                   encountered while handling the exception
    * @throws InvocationTargetException when the given exception does not contain a target exception
    */
-  protected synchronized void dealWithInvocationException(InvocationTargetException e)
+  protected synchronized void processInvocationException(InvocationTargetException e)
           throws Throwable, InvocationTargetException {
-    dealWithOriginalException(e.getTargetException(), e);
+    processException(e.getTargetException(), e);
   }
 
   /**
@@ -1306,8 +1305,8 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    * @throws Throwable this error or the cause of this error. May also throw an error if failover occurs or another error
    *                   is encountered while handling the exception
    */
-  protected void dealWithIllegalStateException(IllegalStateException e) throws Throwable {
-    dealWithOriginalException(e.getCause(), e);
+  protected void processIllegalStateException(IllegalStateException e) throws Throwable {
+    processException(e.getCause(), e);
   }
 
   /**
@@ -1320,13 +1319,13 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    *     otherwise the exception itself will be thrown
    */
   @RequiresNonNull({"this.metrics"})
-  private synchronized void dealWithOriginalException(@Nullable Throwable originalException, Exception wrapperException) throws Throwable {
+  private synchronized void processException(@Nullable Throwable originalException, Exception wrapperException) throws Throwable {
     if (originalException != null) {
       LOGGER.log(Level.WARNING,
               "[ClusterAwareConnectionProxy] Detected an exception while executing a command: {0}",
               originalException.getMessage());
       LOGGER.log(Level.FINER, Util.stackTraceToString(originalException, this.getClass()));
-      if (this.lastExceptionDealtWith != originalException && shouldExceptionTriggerConnectionSwitch(originalException)) {
+      if (this.lastHandledException != originalException && isConnectionSwitchRequired(originalException)) {
 
         if (this.gatherPerfMetricsSetting) {
           long currentTimeMs = System.currentTimeMillis();
@@ -1335,8 +1334,8 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
           this.failoverStartTimeMs = currentTimeMs;
         }
         invalidateCurrentConnection();
-        pickNewConnection(false);
-        this.lastExceptionDealtWith = originalException;
+        switchConnection(false);
+        this.lastHandledException = originalException;
       }
       throw originalException;
     }
@@ -1349,7 +1348,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    * @param t The exception to check
    * @return True if failover should be initiated
    */
-  protected boolean shouldExceptionTriggerConnectionSwitch(Throwable t) {
+  protected boolean isConnectionSwitchRequired(Throwable t) {
 
     if (!isFailoverEnabled()) {
       LOGGER.log(Level.FINE, "[ClusterAwareConnectionProxy] Cluster-aware failover is disabled");
@@ -1410,7 +1409,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
     }
 
     try {
-      connectTo(this.hosts.get(WRITER_CONNECTION_INDEX));
+      connectToHost(this.hosts.get(WRITER_CONNECTION_INDEX));
     } catch (SQLException e) {
       if (this.gatherPerfMetricsSetting) {
         this.failoverStartTimeMs = System.currentTimeMillis();
@@ -1500,11 +1499,11 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    * {@link java.sql.ResultSet}. Similarly to ClusterAwareConnectionProxy, this proxy class monitors the underlying object
    * for communications exceptions and initiates failover when required.
    */
-  class JdbcInterfaceProxy implements InvocationHandler {
-    Object invokeOn;
+  class Proxy implements InvocationHandler {
+    Object invocationTarget;
 
-    JdbcInterfaceProxy(Object toInvokeOn) {
-      this.invokeOn = toInvokeOn;
+    Proxy(Object invocationTarget) {
+      this.invocationTarget = invocationTarget;
     }
 
     public @Nullable Object invoke(Object proxy, Method method, @Nullable Object[] args) throws Throwable {
@@ -1516,12 +1515,12 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
         Object result = null;
 
         try {
-          result = method.invoke(this.invokeOn, args);
-          result = proxyIfReturnTypeIsJdbcInterface(method.getReturnType(), result);
+          result = method.invoke(this.invocationTarget, args);
+          result = wrapWithProxyIfNeeded(method.getReturnType(), result);
         } catch (InvocationTargetException e) {
-          dealWithInvocationException(e);
+          processInvocationException(e);
         } catch (IllegalStateException e) {
-          dealWithIllegalStateException(e);
+          processIllegalStateException(e);
         }
 
         return result;
@@ -1540,15 +1539,14 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
    * @return a proxy of the object returned by the invoked method, if it implements or is
    *         a JDBC interface. Otherwise, simply returns the object itself.
    */
-  protected @Nullable Object proxyIfReturnTypeIsJdbcInterface(Class<?> returnType, @Nullable Object toProxy) {
-    if (toProxy != null) {
-      if (Util.isJdbcInterface(returnType)) {
-        Class<?> toProxyClass = toProxy.getClass();
-        return Proxy.newProxyInstance(toProxyClass.getClassLoader(),
-                Util.getImplementedInterfaces(toProxyClass),
-                new JdbcInterfaceProxy(toProxy));
-      }
+  protected @Nullable Object wrapWithProxyIfNeeded(Class<?> returnType, @Nullable Object toProxy) {
+    if (toProxy == null || !Util.isJdbcInterface(returnType)) {
+      return toProxy;
     }
-    return toProxy;
+
+    Class<?> toProxyClass = toProxy.getClass();
+    return java.lang.reflect.Proxy.newProxyInstance(toProxyClass.getClassLoader(),
+            Util.getImplementedInterfaces(toProxyClass),
+            new Proxy(toProxy));
   }
 }
