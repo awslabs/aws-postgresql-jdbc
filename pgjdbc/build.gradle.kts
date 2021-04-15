@@ -177,10 +177,6 @@ tasks.configureEach<Jar> {
     }
 }
 
-// tasks.jar {
-//    archiveClassifier.set("unshaded")
-// }
-
 tasks.shadowJar {
     configurations = listOf(shaded)
     dependsOn("jar")
