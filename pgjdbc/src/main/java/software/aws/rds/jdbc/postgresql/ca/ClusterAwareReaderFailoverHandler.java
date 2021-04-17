@@ -8,7 +8,7 @@ package software.aws.rds.jdbc.postgresql.ca;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.postgresql.core.BaseConnection;
-import org.postgresql.util.StringUtils;
+import org.postgresql.util.Util;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -434,7 +434,7 @@ public class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
      * */
     @Override
     public ReaderFailoverResult call() {
-      if (StringUtils.isNullOrEmpty(this.newHost.getHost())) {
+      if (Util.isNullOrEmpty(this.newHost.getHost())) {
         return new ReaderFailoverResult(null, null, false);
       }
       LOGGER.log(Level.FINE,
