@@ -82,7 +82,7 @@ Note: The connection string follows standard URL parameters. In order to add par
 
 | URL Type        | Example           | Required Parameters  | Driver Behavior |
 | ------------- |-------------| :-----:| --- |
-| Cluster Endpoint      | `jdbc:postgreql:aws://db-identifier.cluster-XYZ.us-east-2.rds.amazonaws.com:5432` | None | *Initial connection:* primary DB instance<br/>*Failover behavior:* connect to the new primary DB instance |
+| Cluster Endpoint      | `jdbc:postgresql:aws://db-identifier.cluster-XYZ.us-east-2.rds.amazonaws.com:5432` | None | *Initial connection:* primary DB instance<br/>*Failover behavior:* connect to the new primary DB instance |
 | Read-Only Cluster Endpoint      | `jdbc:postgresql:aws://db-identifier.cluster-ro-XYZ.us-east-2.rds.amazonaws.com:5432`      |   None |  *Initial connection:* any Aurora Replica<br/>*Failover behavior:* prioritize connecting to any active Aurora Replica but might connect to the primary DB instance if it provides a faster connection|
 | Instance Endpoint | `jdbc:postgresql:aws://instance-1.XYZ.us-east-2.rds.amazonaws.com:5432`      |    None | *Initial connection:* the instance specified (DB instance 1)<br/>*Failover behavior:* connect to the primary DB instance|
 | RDS Custom Cluster | `jdbc:postgresql:aws://db-identifier.cluster-custom-XYZ.us-east-2l.rds.amazonaws.com:5432`      |    None | *Initial connection:* any DB instance in the custom DB cluster<br/>*Failover behavior:* connect to the primary DB instance (note that this might be outside of the custom DB cluster) |
