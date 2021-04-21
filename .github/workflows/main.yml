@@ -129,8 +129,8 @@ jobs:
       - name: Verify source distribution
         working-directory: pgjdbc/build/distributions
         run: |
-          tar xzf postgresql-1.0-jdbc-src.tar.gz
-          cd postgresql-1.0-jdbc-src
+          tar xzf aws-postgresql-jdbc-1.0-jdbc-src.tar.gz
+          cd aws-postgresql-jdbc-1.0-jdbc-src
           mvn --batch-mode --fail-at-end --show-version verify
 
 #  gss-encryption:

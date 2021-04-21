@@ -177,10 +177,6 @@ tasks.configureEach<Jar> {
     }
 }
 
-tasks.jar {
-    archiveClassifier.set("unshaded")
-}
-
 tasks.shadowJar {
     configurations = listOf(shaded)
     dependsOn("jar")
@@ -202,6 +198,8 @@ tasks.shadowJar {
 }
 
 tasks.register<Jar>("cleanShadowJar") {
+
+    archiveClassifier.set("all")
     dependsOn("shadowJar")
     includeEmptyDirs = false
 
@@ -248,14 +246,14 @@ val osgiJar by tasks.registering(Bundle::class) {
             """
             -exportcontents: !org.postgresql.shaded.*, org.postgresql.*, software.*
             -removeheaders: Created-By
-            Bundle-Descriptiona: Java JDBC driver for PostgreSQL database
-            Bundle-DocURL: https://jdbc.postgresql.org/
-            Bundle-Vendor: PostgreSQL Global Development Group
+            Bundle-Description: Amazon Web Services (AWS) JDBC Driver for PostgreSQL
+            Bundle-DocURL: https://github.com/awslabs/aws-postgresql-jdbc
+            Bundle-Vendor: Amazon Web Services (AWS)
             Import-Package: javax.sql, javax.transaction.xa, javax.naming, javax.security.sasl;resolution:=optional, *;resolution:=optional
             Bundle-Activator: org.postgresql.osgi.PGBundleActivator
-            Bundle-SymbolicName: org.postgresql.jdbc
-            Bundle-Name: PostgreSQL JDBC Driver
-            Bundle-Copyright: Copyright (c) 2003-2020, PostgreSQL Global Development Group
+            Bundle-SymbolicName: software.aws.rds
+            Bundle-Name: Amazon Web Services (AWS) JDBC Driver for PostgreSQL
+            Bundle-Copyright: Copyright Amazon.com Inc. or affiliates.
             Require-Capability: osgi.ee;filter:="(&(|(osgi.ee=J2SE)(osgi.ee=JavaSE))(version>=1.8))"
             Provide-Capability: osgi.service;effective:=active;objectClass=org.osgi.service.jdbc.DataSourceFactory
             """
