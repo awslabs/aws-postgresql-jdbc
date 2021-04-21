@@ -5,7 +5,7 @@
 [![Javadoc](https://javadoc.io/badge2/software.aws.rds/aws-postgresql-jdbc/javadoc.svg)](https://javadoc.io/doc/software.aws.rds/aws-postgresql-jdbc)
 [![License](https://img.shields.io/badge/License-BSD--2--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
 
-**The Amazon Web Services (AWS) JDBC Driver for PostgreSQL** is a driver that enables applications to take full advantage of the features of clustered PostgreSQL databases. It is based on and can be used as a drop-in compatible for the [PostgreSQL JDBC Driver](https://github.com/pgjdbc/pgjdbc) and is compatible with all PostgreSQL deployments.
+**The Amazon Web Services (AWS) JDBC Driver for PostgreSQL** is a driver that enables applications to take full advantage of the features of clustered PostgreSQL databases. It is drop-in compatible and based on the [PostgreSQL JDBC Driver](https://github.com/pgjdbc/pgjdbc), and is compatible with all PostgreSQL deployments.
 
 The AWS JDBC Driver for PostgreSQL currently enables fast failover for Amazon Aurora with PostgreSQL compatibility. Support for additional features of clustered databases, including features of Amazon RDS for PostgreSQL and on-premises PostgreSQL deployments, is planned.
 
@@ -21,7 +21,7 @@ Although Aurora is able to provide maximum availability through the use of failo
 
 ## The AWS JDBC Driver Failover Process
 
-<div style="text-align:center"><img src="./docs/img/failover_diagram.png" /></div>
+<div style="text-align:center"><img src="./docs/files/images/failover_diagram.png" /></div>
 
 The figure above provides a simplified overview of how the AWS JDBC Driver handles an Aurora failover encounter. Starting at the top of the diagram, an application with the AWS JDBC Driver on its class path uses the driver to get a logical connection to an Aurora database. In this example, the application requests a connection using the Aurora DB cluster endpoint and is returned a logical connection that is physically connected to the primary DB instance in the DB cluster, DB instance C. Due to how the application operates against the logical connection, the physical connection details about which specific DB instance it is connected to have been abstracted away. Over the course of the application's lifetime, it executes various statements against the logical connection. If DB instance C is stable and active, these statements succeed and the application continues as normal. If DB instance C later experiences a failure, Aurora will initiate failover to promote a new primary DB instance. At the same time, the AWS JDBC Driver will intercept the related communication exception and kick off its own internal failover process. In this case, in which the primary DB instance has failed, the driver will use its internal topology cache to temporarily connect to an active Aurora Replica. This Aurora Replica will be periodically queried for the DB cluster topology until the new primary DB instance is identified (DB instance A or B in this case). At this point, the driver will connect to the new primary DB instance and return control to the application by raising a SQLException with SQLState 08S02 so that they can re-configure their session state as required. Although the DNS endpoint for the DB cluster might not yet resolve to the new primary DB instance, the driver has already discovered this new DB instance during its failover process and will be directly connected to it when the application continues executing statements. In this way the driver provides a faster way to reconnect to a newly promoted DB instance, thus increasing the availability of the DB cluster.
 
@@ -82,7 +82,7 @@ Note: The connection string follows standard URL parameters. In order to add par
 
 | URL Type        | Example           | Required Parameters  | Driver Behavior |
 | ------------- |-------------| :-----:| --- |
-| Cluster Endpoint      | `jdbc:postgreql:aws://db-identifier.cluster-XYZ.us-east-2.rds.amazonaws.com:5432` | None | *Initial connection:* primary DB instance<br/>*Failover behavior:* connect to the new primary DB instance |
+| Cluster Endpoint      | `jdbc:postgresql:aws://db-identifier.cluster-XYZ.us-east-2.rds.amazonaws.com:5432` | None | *Initial connection:* primary DB instance<br/>*Failover behavior:* connect to the new primary DB instance |
 | Read-Only Cluster Endpoint      | `jdbc:postgresql:aws://db-identifier.cluster-ro-XYZ.us-east-2.rds.amazonaws.com:5432`      |   None |  *Initial connection:* any Aurora Replica<br/>*Failover behavior:* prioritize connecting to any active Aurora Replica but might connect to the primary DB instance if it provides a faster connection|
 | Instance Endpoint | `jdbc:postgresql:aws://instance-1.XYZ.us-east-2.rds.amazonaws.com:5432`      |    None | *Initial connection:* the instance specified (DB instance 1)<br/>*Failover behavior:* connect to the primary DB instance|
 | RDS Custom Cluster | `jdbc:postgresql:aws://db-identifier.cluster-custom-XYZ.us-east-2l.rds.amazonaws.com:5432`      |    None | *Initial connection:* any DB instance in the custom DB cluster<br/>*Failover behavior:* connect to the primary DB instance (note that this might be outside of the custom DB cluster) |
