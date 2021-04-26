@@ -504,7 +504,7 @@ allprojects {
             configureEach<Jar> {
                 manifest {
                     attributes["Bundle-License"] = "BSD-2-Clause"
-                    attributes["Implementation-Title"] = "PostgreSQL JDBC Driver"
+                    attributes["Implementation-Title"] = "Amazon Web Services (AWS) JDBC Driver for PostgreSQL"
                     attributes["Implementation-Version"] = project.version
                     val jdbcSpec = props.string("jdbc.specification.version")
                     if (jdbcSpec.isNotBlank()) {
@@ -512,8 +512,8 @@ allprojects {
                         attributes["Specification-Version"] = jdbcSpec
                         attributes["Specification-Title"] = "JDBC"
                     }
-                    attributes["Implementation-Vendor"] = "PostgreSQL Global Development Group"
-                    attributes["Implementation-Vendor-Id"] = "org.postgresql"
+                    attributes["Implementation-Vendor"] = "Amazon Web Services (AWS)"
+                    attributes["Implementation-Vendor-Id"] = "software.aws.rds"
                 }
             }
 
