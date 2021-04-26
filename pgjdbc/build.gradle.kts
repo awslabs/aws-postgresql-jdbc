@@ -172,7 +172,7 @@ val shadedLicenseFiles = licensesCopySpec(renderShadedLicense)
 tasks.configureEach<Jar> {
     archiveBaseName.set("aws-postgresql-jdbc")
     manifest {
-        attributes["Main-Class"] = "org.postgresql.util.PGJDBCMain"
+        attributes["Main-Class"] = "software.aws.rds.jdbc.postgresql.shading.org.postgresql.util.PGJDBCMain"
         attributes["Automatic-Module-Name"] = "org.postgresql.jdbc"
     }
 }
