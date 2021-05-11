@@ -22,6 +22,7 @@ import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 import org.postgresql.util.Util;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -684,6 +685,11 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       validateInitialConnection(connectedUsingCachedTopology);
       if (this.currentHost != null && this.explicitlyReadOnly) {
         topologyService.setLastUsedReaderHost(this.currentHost);
+      }
+      try {
+        this.currentConnection.getQueryExecutor().setNetworkTimeout(this.failoverSocketTimeout * 1000);
+      } catch(IOException e) {
+        throw new SQLException(e.getMessage(), PSQLState.UNKNOWN_STATE.getState());
       }
     }
   }
