@@ -688,7 +688,7 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       }
       try {
         this.currentConnection.getQueryExecutor().setNetworkTimeout(this.failoverSocketTimeout * 1000);
-      } catch(IOException e) {
+      } catch (IOException e) {
         throw new SQLException(e.getMessage(), PSQLState.UNKNOWN_STATE.getState());
       }
     }
