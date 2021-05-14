@@ -686,10 +686,12 @@ public class ClusterAwareConnectionProxy implements InvocationHandler {
       if (this.currentHost != null && this.explicitlyReadOnly) {
         topologyService.setLastUsedReaderHost(this.currentHost);
       }
-      try {
-        this.currentConnection.getQueryExecutor().setNetworkTimeout(this.failoverSocketTimeout * 1000);
-      } catch (IOException e) {
-        throw new SQLException(e.getMessage(), PSQLState.UNKNOWN_STATE.getState());
+      if (this.currentConnection != null) {
+        try {
+          this.currentConnection.getQueryExecutor().setNetworkTimeout(this.failoverSocketTimeout * 1000);
+        } catch (IOException e) {
+          throw new SQLException(e.getMessage(), PSQLState.UNEXPECTED_ERROR.getState());
+        }
       }
     }
   }
