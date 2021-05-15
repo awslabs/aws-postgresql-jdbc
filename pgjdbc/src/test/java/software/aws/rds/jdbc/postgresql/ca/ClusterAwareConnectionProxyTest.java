@@ -502,6 +502,9 @@ public class ClusterAwareConnectionProxyTest {
     final ConnectionProvider mockConnectionProvider = Mockito.mock(ConnectionProvider.class);
     when(mockConnectionProvider.connect(hostSpec, props, url)).thenReturn(mockConn);
 
+    final QueryExecutor mockQueryExecutor = Mockito.mock(QueryExecutor.class);
+    when(mockConn.getQueryExecutor()).thenReturn(mockQueryExecutor);
+
     final TopologyService mockTopologyService = Mockito.mock(TopologyService.class);
     final List<HostInfo> mockTopology = new ArrayList<>();
     mockTopology.add(Mockito.mock(HostInfo.class));
