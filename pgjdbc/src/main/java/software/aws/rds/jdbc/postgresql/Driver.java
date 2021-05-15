@@ -1,4 +1,9 @@
 /*
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ * See the LICENSE file in the project root for more information.
+ */
+
+/*
  * AWS JDBC Driver for PostgreSQL
  * Copyright Amazon.com Inc. or affiliates.
  * See the LICENSE file in the project root for more information.
