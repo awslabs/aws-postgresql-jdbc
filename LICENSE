@@ -1,7 +1,14 @@
-AWS JDBC Driver for PostgreSQL and all Amazon modifications to PostgreSQL JDBC Driver
+AWS JDBC Driver for PostgreSQL
+
+This driver is based on the existing PostgreSQL JDBC Driver:
+
+    https://jdbc.postgresql.org/
+
+The Amazon driver and all Amazon modifications are licensed under the 
+same license as the PostgreSQL JDBC Driver and are
 Copyright Amazon.com Inc. or affiliates. All rights reserved.
 
-PostgreSQL JDBC Driver - https://jdbc.postgresql.org/
+The original PostgreSQL JDBC Driver is
 Copyright (c) 1997, PostgreSQL Global Development Group
 All rights reserved.
 
