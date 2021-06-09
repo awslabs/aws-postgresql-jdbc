@@ -79,6 +79,9 @@ public class ClusterAwareConnectionProxyTest {
     final ConnectionProvider mockConnectionProvider = Mockito.mock(ConnectionProvider.class);
     when(mockConnectionProvider.connect(hostSpec, props, url )).thenReturn(mockConn);
 
+    final QueryExecutor mockQueryExecutor = Mockito.mock(QueryExecutor.class);
+    when(mockConn.getQueryExecutor()).thenReturn(mockQueryExecutor);
+
     final List<HostInfo> mockTopology = new ArrayList<>();
     mockTopology.add(Mockito.mock(HostInfo.class));
     when(mockTopologyService.getTopology(eq(mockConn), any(Boolean.class)))
@@ -156,6 +159,9 @@ public class ClusterAwareConnectionProxyTest {
     when(mockConnectionProvider.connect(hostSpec, props, url)).thenReturn(mockConn);
     final TopologyService mockTopologyService = Mockito.mock(TopologyService.class);
 
+    final QueryExecutor mockQueryExecutor = Mockito.mock(QueryExecutor.class);
+    when(mockConn.getQueryExecutor()).thenReturn(mockQueryExecutor);
+
     final List<HostInfo> mockTopology = new ArrayList<>();
     HostInfo writerHost = new HostInfo("writer-host.XYZ.us-east-2.rds.amazonaws.com", "writer-host", 1234,true);
     mockTopology.add(writerHost);
@@ -199,6 +205,9 @@ public class ClusterAwareConnectionProxyTest {
     final BaseConnection mockConn = Mockito.mock(BaseConnection.class);
     final ConnectionProvider mockConnectionProvider = Mockito.mock(ConnectionProvider.class);
     when(mockConnectionProvider.connect(hostSpec, props, url)).thenReturn(mockConn);
+
+    final QueryExecutor mockQueryExecutor = Mockito.mock(QueryExecutor.class);
+    when(mockConn.getQueryExecutor()).thenReturn(mockQueryExecutor);
 
     final TopologyService mockTopologyService = Mockito.mock(TopologyService.class);
 
@@ -246,6 +255,9 @@ public class ClusterAwareConnectionProxyTest {
     final ConnectionProvider mockConnectionProvider = Mockito.mock(ConnectionProvider.class);
     when(mockConnectionProvider.connect(hostSpec, props, url)).thenReturn(mockConn);
 
+    final QueryExecutor mockQueryExecutor = Mockito.mock(QueryExecutor.class);
+    when(mockConn.getQueryExecutor()).thenReturn(mockQueryExecutor);
+
     final TopologyService mockTopologyService = Mockito.mock(TopologyService.class);
 
     final List<HostInfo> mockTopology = new ArrayList<>();
@@ -289,6 +301,9 @@ public class ClusterAwareConnectionProxyTest {
 
     final ConnectionProvider mockConnectionProvider = Mockito.mock(ConnectionProvider.class);
     when(mockConnectionProvider.connect(hostSpec, props, url)).thenReturn(mockConn);
+
+    final QueryExecutor mockQueryExecutor = Mockito.mock(QueryExecutor.class);
+    when(mockConn.getQueryExecutor()).thenReturn(mockQueryExecutor);
 
     final TopologyService mockTopologyService = Mockito.mock(TopologyService.class);
 
@@ -381,6 +396,9 @@ public class ClusterAwareConnectionProxyTest {
     final ConnectionProvider mockConnectionProvider = Mockito.mock(ConnectionProvider.class);
     when(mockConnectionProvider.connect(hostSpec, props, url)).thenReturn(mockConn);
 
+    final QueryExecutor mockQueryExecutor = Mockito.mock(QueryExecutor.class);
+    when(mockConn.getQueryExecutor()).thenReturn(mockQueryExecutor);
+
     final List<HostInfo> mockTopology = new ArrayList<>();
     mockTopology.add(Mockito.mock(HostInfo.class));
     when(mockTopologyService.getTopology(eq(mockConn), any(Boolean.class)))
@@ -421,6 +439,9 @@ public class ClusterAwareConnectionProxyTest {
 
     final ConnectionProvider mockConnectionProvider = Mockito.mock(ConnectionProvider.class);
     when(mockConnectionProvider.connect(hostSpec, props, url)).thenReturn(mockConn);
+
+    final QueryExecutor mockQueryExecutor = Mockito.mock(QueryExecutor.class);
+    when(mockConn.getQueryExecutor()).thenReturn(mockQueryExecutor);
 
     final List<HostInfo> mockTopology = new ArrayList<>();
     mockTopology.add(Mockito.mock(HostInfo.class));
@@ -465,6 +486,9 @@ public class ClusterAwareConnectionProxyTest {
 
     when(mockConnectionProvider.connect(hostSpec, props, url)).thenReturn(mockConn);
 
+    final QueryExecutor mockQueryExecutor = Mockito.mock(QueryExecutor.class);
+    when(mockConn.getQueryExecutor()).thenReturn(mockQueryExecutor);
+
     final List<HostInfo> mockTopology = new ArrayList<>();
     mockTopology.add(Mockito.mock(HostInfo.class));
     when(mockTopologyService.getTopology(eq(mockConn), any(Boolean.class)))
@@ -501,6 +525,9 @@ public class ClusterAwareConnectionProxyTest {
     final BaseConnection mockConn = Mockito.mock(BaseConnection.class);
     final ConnectionProvider mockConnectionProvider = Mockito.mock(ConnectionProvider.class);
     when(mockConnectionProvider.connect(hostSpec, props, url)).thenReturn(mockConn);
+
+    final QueryExecutor mockQueryExecutor = Mockito.mock(QueryExecutor.class);
+    when(mockConn.getQueryExecutor()).thenReturn(mockQueryExecutor);
 
     final TopologyService mockTopologyService = Mockito.mock(TopologyService.class);
     final List<HostInfo> mockTopology = new ArrayList<>();
@@ -568,6 +595,9 @@ public class ClusterAwareConnectionProxyTest {
     final ConnectionProvider mockConnectionProvider = Mockito.mock(ConnectionProvider.class);
     final TopologyService mockTopologyService = Mockito.mock(TopologyService.class);
 
+    final QueryExecutor mockQueryExecutor = Mockito.mock(QueryExecutor.class);
+    when(mockConn.getQueryExecutor()).thenReturn(mockQueryExecutor);
+
     final HostInfo writerHost = new HostInfo("writer-host.XYZ.us-east-2.rds.amazonaws.com", "writer-host", 1234, true);
     final HostInfo readerA_Host = new HostInfo("reader-a-host.XYZ.us-east-2.rds.amazonaws.com","reader-a-host", 1234, false);
     final HostInfo readerB_Host = new HostInfo("reader-b-host.XYZ.us-east-2.rds.amazonaws.com", "reader-b-host", 1234, false);
@@ -603,6 +633,9 @@ public class ClusterAwareConnectionProxyTest {
         "jdbc:postgresql:aws://my-cluster-name.cluster-ro-XYZ.us-east-2.rds.amazonaws.com:1234/test";
     final HostSpec hostSpec = urlToHostSpec(url);
     final Properties props = getPropertiesWithDb();
+
+    final QueryExecutor mockQueryExecutor = Mockito.mock(QueryExecutor.class);
+    when(mockConn.getQueryExecutor()).thenReturn(mockQueryExecutor);
 
     final TopologyService mockTopologyService = Mockito.mock(TopologyService.class);
 
@@ -641,6 +674,9 @@ public class ClusterAwareConnectionProxyTest {
     final Properties props = getPropertiesWithDb();
 
     final BaseConnection mockConn = Mockito.mock(BaseConnection.class);
+
+    final QueryExecutor mockQueryExecutor = Mockito.mock(QueryExecutor.class);
+    when(mockConn.getQueryExecutor()).thenReturn(mockQueryExecutor);
 
     final TopologyService mockTopologyService = Mockito.mock(TopologyService.class);
 
@@ -686,6 +722,7 @@ public class ClusterAwareConnectionProxyTest {
     final BaseConnection mockCachedWriterConn = Mockito.mock(BaseConnection.class);
     final QueryExecutor mockQueryExecutor = Mockito.mock(QueryExecutor.class);
     when(mockCachedWriterConn.getQueryExecutor()).thenReturn(mockQueryExecutor);
+    when(mockActualWriterConn.getQueryExecutor()).thenReturn(mockQueryExecutor);
     when(mockQueryExecutor.getTransactionState()).thenReturn(TransactionState.IDLE);
 
     final TopologyService mockTopologyService = Mockito.mock(TopologyService.class);
