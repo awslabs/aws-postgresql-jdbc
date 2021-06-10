@@ -103,7 +103,7 @@ public class TestUtil {
       ssl = "&ssl=" + getSSL();
     }
 
-    return "jdbc:postgresql://"
+    return "jdbc:postgresql:aws://"
         + hostport + "/"
         + database
         + "?ApplicationName=Driver Tests"

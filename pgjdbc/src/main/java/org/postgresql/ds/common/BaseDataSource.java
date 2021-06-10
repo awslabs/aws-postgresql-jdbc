@@ -1216,7 +1216,7 @@ public abstract class BaseDataSource implements CommonDataSource, Referenceable 
    */
   public String getUrl() {
     StringBuilder url = new StringBuilder(100);
-    url.append("jdbc:postgresql://");
+    url.append("jdbc:postgresql:aws://");
     for (int i = 0; i < serverNames.length; i++) {
       if (i > 0) {
         url.append(",");
@@ -1268,7 +1268,7 @@ public abstract class BaseDataSource implements CommonDataSource, Referenceable 
    */
   public void setUrl(String url) {
 
-    Properties p = org.postgresql.Driver.parseURL(url, null);
+    Properties p = software.aws.rds.jdbc.postgresql.Driver.parseURL(url, null);
 
     if (p == null) {
       throw new IllegalArgumentException("URL invalid " + url);
@@ -1707,13 +1707,6 @@ public abstract class BaseDataSource implements CommonDataSource, Referenceable 
   }
 
   // Cluster Aware Failover Properties
-  public boolean getAcceptAwsProtocolOnly() {
-    return PGProperty.ACCEPT_AWS_PROTOCOL_ONLY.getBoolean(properties);
-  }
-
-  public void setAcceptAwsProtocolOnly(boolean awsProtocolOnly) {
-    PGProperty.ACCEPT_AWS_PROTOCOL_ONLY.set(properties, awsProtocolOnly);
-  }
 
   public @Nullable String getClusterId() {
     return PGProperty.CLUSTER_ID.get(properties);

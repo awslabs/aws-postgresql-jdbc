@@ -19,7 +19,6 @@ import software.aws.rds.jdbc.postgresql.ca.ClusterAwareConnectionProxy;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.postgresql.PGProperty;
-import org.postgresql.jdbc.PgConnection;
 import org.postgresql.util.ExpressionProperties;
 import org.postgresql.util.GT;
 import org.postgresql.util.HostSpec;
@@ -67,12 +66,10 @@ import java.util.logging.StreamHandler;
  * @see java.sql.Driver
  */
 public class Driver extends org.postgresql.Driver {
-  public static final String POSTGRES_PROTOCOL = "jdbc:postgresql:";
-  public static final String AWS_PROTOCOL = POSTGRES_PROTOCOL + "aws:";
+  public static final String AWS_PROTOCOL = "jdbc:postgresql:aws:";
 
   private static final Logger PARENT_LOGGER = Logger.getLogger(shadingPrefix("software.aws.rds.jdbc.postgresql"));
   private static final Logger LOGGER = Logger.getLogger(shadingPrefix("software.aws.rds.jdbc.postgresql.Driver"));
-  private static boolean acceptAwsProtocolOnly = false;
 
   static {
     try {
@@ -80,20 +77,6 @@ public class Driver extends org.postgresql.Driver {
     } catch (SQLException e) {
       throw new ExceptionInInitializerError(e);
     }
-  }
-
-  /**
-   * Set the acceptAwsProtocolOnly property for the driver, which controls whether protocols other than
-   * jdbc:postgresql:aws:// will be accepted by the driver. This setting should be set to true when
-   * running an application that uses this driver simultaneously with another postgresql
-   * driver that supports the same protocols (eg the PostgreSQL JDBC Driver), to ensure the driver
-   * protocols do not clash. The property can also be set at the connection level via a connection
-   * parameter, which will take priority over this driver-level property.
-   *
-   * @param awsProtocolOnly enables the acceptAwsProtocolOnly mode of the driver
-   */
-  public static void setAcceptAwsProtocolOnly(boolean awsProtocolOnly) {
-    acceptAwsProtocolOnly = awsProtocolOnly;
   }
 
   @Override
@@ -210,7 +193,7 @@ public class Driver extends org.postgresql.Driver {
     // get defaults
     Properties defaults;
 
-    if (!url.startsWith(POSTGRES_PROTOCOL)) {
+    if (!url.startsWith(AWS_PROTOCOL)) {
       return null;
     }
     try {
@@ -466,10 +449,10 @@ public class Driver extends org.postgresql.Driver {
                 connProxy);
       }
       return connProxy.getConnection();
-    }
+    } else {
 
-    boolean awsProtocolOnly = isAcceptAwsProtocolOnly(props);
-    return awsProtocolOnly ? null : new PgConnection(hostSpecs(props), user(props), database(props), props, url);
+      return null;
+    }
   }
 
   /**
@@ -535,17 +518,15 @@ public class Driver extends org.postgresql.Driver {
       urlArgs = url.substring(qPos + 1);
     }
 
-    if (!urlServer.startsWith(POSTGRES_PROTOCOL)) {
-      final String errorMessage = "JDBC URL must start with \"" + POSTGRES_PROTOCOL + "\" or \""
+    if (!urlServer.startsWith(AWS_PROTOCOL)) {
+      final String errorMessage = "JDBC URL must start with \""
           + AWS_PROTOCOL + "\" but was: {0}";
 
       LOGGER.log(Level.FINE, errorMessage, url);
       return null;
     }
 
-    urlServer = urlServer.startsWith(AWS_PROTOCOL)
-        ? urlServer.substring(AWS_PROTOCOL.length()) :
-        urlServer.substring(POSTGRES_PROTOCOL.length());
+    urlServer = urlServer.substring(AWS_PROTOCOL.length());
 
     if (urlServer.startsWith("//")) {
       urlServer = urlServer.substring(2);
@@ -616,30 +597,7 @@ public class Driver extends org.postgresql.Driver {
       }
     }
 
-    boolean awsProtocolOnly = isAcceptAwsProtocolOnly(urlProps);
-    if (awsProtocolOnly && !url.startsWith(AWS_PROTOCOL)) {
-      final String urlRejectedMessage = "acceptAwsProtocolOnly mode is enabled; JDBC URL must start with \"" + AWS_PROTOCOL + "\" but was: {0}";
-
-      LOGGER.log(Level.FINE, urlRejectedMessage, url);
-      return null;
-    }
-
     return urlProps;
-  }
-
-  /**
-   * Evaluates whether the driver should only accept AWS protocols or not, based on the properties
-   * passed in. If the properties contain the acceptAwsProtocolOnly connection parameter, that value
-   * will be used. Otherwise, the driver-level property contained in this class will be used.
-   *
-   * @param props the props to check for an acceptAwsProtocolOnly value
-   */
-  private static boolean isAcceptAwsProtocolOnly(Properties props) {
-    if (props.get(PGProperty.ACCEPT_AWS_PROTOCOL_ONLY.getName()) != null) {
-      return PGProperty.ACCEPT_AWS_PROTOCOL_ONLY.getBoolean(props);
-    } else {
-      return acceptAwsProtocolOnly;
-    }
   }
 
   /**

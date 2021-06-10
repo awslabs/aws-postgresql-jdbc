@@ -23,16 +23,6 @@ import java.util.Properties;
  * datasource setters.
  */
 public enum PGProperty {
-  /**
-   * Cluster Aware Failover Parameter: Set to true to only accept connections for URLs with the
-   * jdbc:postgresql:aws:// protocol. This setting should be set to true when running an application
-   * that uses this driver simultaneously with another postgresql driver that supports the same
-   * protocols (eg the PostgreSQL JDBC Driver), to ensure the driver protocols do not clash.
-   */
-  ACCEPT_AWS_PROTOCOL_ONLY(
-      "acceptAwsProtocolOnly",
-      "false",
-      "Set to true to only accept connections for URLs with the jdbc:postgresql:aws:// protocol"),
 
   /**
    * Specifies if number of rows, used during fetching rows of a result set, should be computed
