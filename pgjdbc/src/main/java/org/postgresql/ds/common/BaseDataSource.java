@@ -1268,7 +1268,10 @@ public abstract class BaseDataSource implements CommonDataSource, Referenceable 
    */
   public void setUrl(String url) {
 
-    Properties p = software.aws.rds.jdbc.postgresql.Driver.parseURL(url, null);
+    final String AWS_PROTOCOL = "jdbc:postgresql:aws://";
+    Properties p = url.startsWith(AWS_PROTOCOL)
+            ? software.aws.rds.jdbc.postgresql.Driver.parseURL(url, null)
+            : org.postgresql.Driver.parseURL(url, null);
 
     if (p == null) {
       throw new IllegalArgumentException("URL invalid " + url);

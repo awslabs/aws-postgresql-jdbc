@@ -9,9 +9,16 @@ import static org.junit.Assert.assertEquals;
 
 import org.postgresql.ds.common.BaseDataSource;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import javax.naming.NamingException;
 
@@ -19,6 +26,38 @@ import javax.naming.NamingException;
 * tests that failover urls survive the parse/rebuild roundtrip with and without specific ports
 */
 public class BaseDataSourceFailoverUrlsTest {
+
+  boolean isAwsRegsitered = false;
+  boolean isCommunityRegistered = false;
+
+  @Before
+  public void deregisterAwsDriver() throws SQLException {
+    ArrayList<Driver> drivers = Collections.list(DriverManager.getDrivers());
+    for (java.sql.Driver driver : drivers) {
+      if (driver instanceof software.aws.rds.jdbc.postgresql.Driver) {
+        DriverManager.deregisterDriver(driver);
+        isAwsRegsitered = true;
+
+      }
+      if (driver instanceof org.postgresql.Driver) {
+        isCommunityRegistered = true;
+      }
+    }
+    DriverManager.registerDriver(new org.postgresql.Driver());
+  }
+
+  @After
+  public void regsiterAwsDriver() throws SQLException {
+    ArrayList<Driver> drivers = Collections.list(DriverManager.getDrivers());
+    for (java.sql.Driver driver : drivers) {
+      if (driver instanceof org.postgresql.Driver && ! isCommunityRegistered) {
+        DriverManager.deregisterDriver(driver);
+      }
+    }
+    if (isAwsRegsitered) {
+      DriverManager.registerDriver(new software.aws.rds.jdbc.postgresql.Driver());
+    }
+  }
 
   private static final String DEFAULT_PORT = "5432";
 
@@ -52,7 +91,7 @@ public class BaseDataSourceFailoverUrlsTest {
     BaseDataSource bds = newDS();
     bds.setDatabaseName("database");
     bds.setPortNumbers(null);
-    assertUrlWithoutParamsEquals("jdbc:postgresql://localhost/database", bds.getURL());
+    assertUrlWithoutParamsEquals("jdbc:postgresql://localhost/database", getUrlWithOriginalProtocol(bds));
     assertEquals(0, bds.getPortNumber());
     assertEquals(0, bds.getPortNumbers()[0]);
   }
@@ -62,7 +101,7 @@ public class BaseDataSourceFailoverUrlsTest {
     BaseDataSource bds = newDS();
     bds.setDatabaseName("database");
     bds.setPortNumbers(new int[0]);
-    assertUrlWithoutParamsEquals("jdbc:postgresql://localhost/database", bds.getURL());
+    assertUrlWithoutParamsEquals("jdbc:postgresql://localhost/database", getUrlWithOriginalProtocol(bds));
     assertEquals(0, bds.getPortNumber());
     assertEquals(0, bds.getPortNumbers()[0]);
   }
@@ -80,13 +119,13 @@ public class BaseDataSourceFailoverUrlsTest {
     BaseDataSource bds = newDS();
 
     bds.setUrl(in);
-    assertUrlWithoutParamsEquals(expected, bds.getURL());
+    assertUrlWithoutParamsEquals(expected, getUrlWithOriginalProtocol(bds));
 
     bds.setFromReference(bds.getReference());
-    assertUrlWithoutParamsEquals(expected, bds.getURL());
+    assertUrlWithoutParamsEquals(expected, getUrlWithOriginalProtocol(bds));
 
     bds.initializeFrom(bds);
-    assertUrlWithoutParamsEquals(expected, bds.getURL());
+    assertUrlWithoutParamsEquals(expected, getUrlWithOriginalProtocol(bds));
   }
 
   private static String jdbcUrlStripParams(String in) {
@@ -95,5 +134,15 @@ public class BaseDataSourceFailoverUrlsTest {
 
   private static void assertUrlWithoutParamsEquals(String expected, String url) {
     assertEquals(expected, jdbcUrlStripParams(url));
+  }
+
+  /**
+   * Replaces aws protocol with community protocol when retrieving url from BaseDataSource
+   * @param bds BaseDataSource to retrieve URL
+   * @return URL from BaseDataSource with community protocol
+   */
+  private String getUrlWithOriginalProtocol(BaseDataSource bds) {
+
+    return bds.getUrl().replace("jdbc:postgresql:aws://", "jdbc:postgresql://");
   }
 }

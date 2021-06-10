@@ -158,11 +158,13 @@ public class DriverTest {
    */
   @Test
   public void testConnectFailover() throws Exception {
-    String url = "jdbc:postgresql:aws://invalidhost.not.here," + TestUtil.getServer() + ":"
+
+    String url = "jdbc:postgresql://invalidhost.not.here," + TestUtil.getServer() + ":"
         + TestUtil.getPort() + "/" + TestUtil.getDatabase() + "?connectTimeout=5";
     Connection con = DriverManager.getConnection(url, TestUtil.getUser(), TestUtil.getPassword());
     assertNotNull(con);
     con.close();
+
   }
 
   /*
