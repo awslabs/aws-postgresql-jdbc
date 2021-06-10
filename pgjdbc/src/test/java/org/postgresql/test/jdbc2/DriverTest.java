@@ -159,6 +159,7 @@ public class DriverTest {
   @Test
   public void testConnectFailover() throws Exception {
 
+    DriverManager.registerDriver(new org.postgresql.Driver());
     String url = "jdbc:postgresql://invalidhost.not.here," + TestUtil.getServer() + ":"
         + TestUtil.getPort() + "/" + TestUtil.getDatabase() + "?connectTimeout=5";
     Connection con = DriverManager.getConnection(url, TestUtil.getUser(), TestUtil.getPassword());

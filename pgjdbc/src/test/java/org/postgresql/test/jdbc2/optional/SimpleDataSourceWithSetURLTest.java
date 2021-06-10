@@ -6,7 +6,6 @@
 package org.postgresql.test.jdbc2.optional;
 
 import static org.junit.Assert.assertEquals;
-import static org.postgresql.Driver.parseURL;
 
 import org.postgresql.PGProperty;
 import org.postgresql.jdbc2.optional.SimpleDataSource;
@@ -40,7 +39,7 @@ public class SimpleDataSourceWithSetURLTest extends BaseDataSourceTest {
     con = getDataSourceConnection();
 
     String url = bds.getURL();
-    Properties properties = parseURL(url, null);
+    Properties properties = software.aws.rds.jdbc.postgresql.Driver.parseURL(url, null);
 
     assertEquals(TestUtil.getServer(), properties.getProperty(PGProperty.PG_HOST.getName()));
     assertEquals(Integer.toString(TestUtil.getPort()), properties.getProperty(PGProperty.PG_PORT.getName()));
