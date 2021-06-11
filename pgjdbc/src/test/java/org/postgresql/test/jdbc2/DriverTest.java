@@ -69,8 +69,6 @@ public class DriverTest {
 
     verifyUrl(drv, "jdbc:postgresql:aws://localhost/test", "localhost", "5432", "test");
     assertFalse(drv.acceptsURL("jdbc:postgresql://localhost:5432/test"));
-    assertTrue(drv.acceptsURL("jdbc:postgresql:aws://localhost:5432/test"));
-
   }
 
   /*
@@ -83,12 +81,12 @@ public class DriverTest {
     assertNotNull(drv);
 
     // These are always correct
-    verifyUrl(drv, "jdbc:postgresql:aws:test", "localhost", "5432", "test");
-    verifyUrl(drv, "jdbc:postgresql:aws://localhost/test", "localhost", "5432", "test");
-    verifyUrl(drv, "jdbc:postgresql:aws://localhost:5432/test", "localhost", "5432", "test");
-    verifyUrl(drv, "jdbc:postgresql:aws://127.0.0.1/anydbname", "127.0.0.1", "5432", "anydbname");
-    verifyUrl(drv, "jdbc:postgresql:aws://127.0.0.1:5433/hidden", "127.0.0.1", "5433", "hidden");
-    verifyUrl(drv, "jdbc:postgresql:aws://[::1]:5740/db", "[::1]", "5740", "db");
+    verifyUrl(drv, "jdbc:postgresql:test", "localhost", "5432", "test");
+    verifyUrl(drv, "jdbc:postgresql://localhost/test", "localhost", "5432", "test");
+    verifyUrl(drv, "jdbc:postgresql://localhost:5432/test", "localhost", "5432", "test");
+    verifyUrl(drv, "jdbc:postgresql://127.0.0.1/anydbname", "127.0.0.1", "5432", "anydbname");
+    verifyUrl(drv, "jdbc:postgresql://127.0.0.1:5433/hidden", "127.0.0.1", "5433", "hidden");
+    verifyUrl(drv, "jdbc:postgresql://[::1]:5740/db", "[::1]", "5740", "db");
 
     verifyUrl(drv, "jdbc:postgresql:aws:test", "localhost", "5432", "test");
     verifyUrl(drv, "jdbc:postgresql:aws://localhost/test", "localhost", "5432", "test");
@@ -107,6 +105,13 @@ public class DriverTest {
     assertFalse(drv.acceptsURL("jdbc:postgresql://localhost:-2/test"));
 
     // failover urls
+    verifyUrl(drv, "jdbc:postgresql://localhost,127.0.0.1:5432/test", "localhost,127.0.0.1",
+        "5432,5432", "test");
+    verifyUrl(drv, "jdbc:postgresql://localhost:5433,127.0.0.1:5432/test", "localhost,127.0.0.1",
+        "5433,5432", "test");
+    verifyUrl(drv, "jdbc:postgresql://[::1],[::1]:5432/db", "[::1],[::1]", "5432,5432", "db");
+    verifyUrl(drv, "jdbc:postgresql://[::1]:5740,127.0.0.1:5432/db", "[::1],127.0.0.1", "5740,5432",
+        "db");
 
     verifyUrl(drv, "jdbc:postgresql:aws://localhost,127.0.0.1:5432/test", "localhost,127.0.0.1",
         "5432,5432", "test");
@@ -158,14 +163,11 @@ public class DriverTest {
    */
   @Test
   public void testConnectFailover() throws Exception {
-
-    DriverManager.registerDriver(new org.postgresql.Driver());
     String url = "jdbc:postgresql://invalidhost.not.here," + TestUtil.getServer() + ":"
         + TestUtil.getPort() + "/" + TestUtil.getDatabase() + "?connectTimeout=5";
     Connection con = DriverManager.getConnection(url, TestUtil.getUser(), TestUtil.getPassword());
     assertNotNull(con);
     con.close();
-
   }
 
   /*
