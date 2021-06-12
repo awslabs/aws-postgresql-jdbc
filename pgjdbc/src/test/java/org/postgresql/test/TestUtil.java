@@ -5,6 +5,7 @@
 
 package org.postgresql.test;
 
+import org.postgresql.Driver;
 import org.postgresql.PGConnection;
 import org.postgresql.PGProperty;
 import org.postgresql.core.BaseConnection;
@@ -17,7 +18,6 @@ import org.postgresql.util.PSQLException;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.Assert;
-import software.aws.rds.jdbc.postgresql.Driver;
 
 import java.io.Closeable;
 import java.io.File;
@@ -32,6 +32,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -275,7 +276,7 @@ public class TestUtil {
       }
 
       try {
-        Driver.register();
+        DriverManager.registerDriver(new Driver());
       } catch (Exception e) { }
 
       Properties p = loadPropertyFiles("build.properties");
@@ -337,7 +338,7 @@ public class TestUtil {
    */
   public static Connection openDB(Properties props) throws SQLException {
     initDriver();
-
+    registerCommunityDriver();
     // Allow properties to override the user name.
     String user = props.getProperty("username");
     if (user == null) {
@@ -1097,5 +1098,76 @@ public class TestUtil {
       } catch (SQLException e) {
       }
     }
+  }
+
+  public static void registerCommunityDriver() throws SQLException {
+
+    boolean isCommunityRegistered = false;
+    ArrayList<java.sql.Driver> drivers = Collections.list(DriverManager.getDrivers());
+    for (java.sql.Driver driver: drivers) {
+
+      if (driver instanceof org.postgresql.Driver && !(driver instanceof software.aws.rds.jdbc.postgresql.Driver)) {
+        isCommunityRegistered = true;
+        break;
+      }
+    }
+    if (!isCommunityRegistered) {
+
+      DriverManager.registerDriver(new org.postgresql.Driver());
+    }
+
+  }
+
+  public static void registerAwsDriver() throws SQLException {
+
+    boolean isAwsRegistered = false;
+    ArrayList<java.sql.Driver> drivers = Collections.list(DriverManager.getDrivers());
+    for (java.sql.Driver driver: drivers) {
+
+      if (driver instanceof software.aws.rds.jdbc.postgresql.Driver) {
+        isAwsRegistered = true;
+        break;
+      }
+    }
+    if (!isAwsRegistered) {
+
+      DriverManager.registerDriver(new software.aws.rds.jdbc.postgresql.Driver());
+    }
+  }
+
+  public static void deregisterCommunityDriver() throws SQLException {
+
+    ArrayList<java.sql.Driver> drivers = Collections.list(DriverManager.getDrivers());
+    for (java.sql.Driver driver: drivers) {
+
+      if (driver instanceof org.postgresql.Driver && !(driver instanceof software.aws.rds.jdbc.postgresql.Driver)) {
+        DriverManager.deregisterDriver(driver);
+      }
+    }
+
+  }
+
+  public static void deregisterAwsDriver() throws SQLException {
+
+    ArrayList<java.sql.Driver> drivers = Collections.list(DriverManager.getDrivers());
+    for (java.sql.Driver driver: drivers) {
+
+      if (driver instanceof software.aws.rds.jdbc.postgresql.Driver) {
+        DriverManager.deregisterDriver(driver);
+      }
+    }
+
+  }
+
+  public static void awsDriverOnly() throws SQLException {
+
+    deregisterCommunityDriver();
+    registerAwsDriver();
+  }
+
+  public static void communityDriverOnly() throws SQLException {
+
+    deregisterAwsDriver();
+    registerAwsDriver();
   }
 }

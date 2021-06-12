@@ -35,7 +35,7 @@ import java.util.logging.Handler;
 import java.util.logging.Logger;
 
 /*
- * Tests the dynamically created class software.aws.rds.jdbc.postgresql.Driver
+ * Tests the dynamically created class org.postgresql.Driver
  *
  */
 public class DriverTest {
@@ -76,8 +76,9 @@ public class DriverTest {
    */
   @Test
   public void testAcceptsURL() throws Exception {
+
     // Load the driver (note clients should never do it this way!)
-    software.aws.rds.jdbc.postgresql.Driver drv = new software.aws.rds.jdbc.postgresql.Driver();
+    org.postgresql.Driver drv = new org.postgresql.Driver();
     assertNotNull(drv);
 
     // These are always correct
@@ -87,13 +88,6 @@ public class DriverTest {
     verifyUrl(drv, "jdbc:postgresql://127.0.0.1/anydbname", "127.0.0.1", "5432", "anydbname");
     verifyUrl(drv, "jdbc:postgresql://127.0.0.1:5433/hidden", "127.0.0.1", "5433", "hidden");
     verifyUrl(drv, "jdbc:postgresql://[::1]:5740/db", "[::1]", "5740", "db");
-
-    verifyUrl(drv, "jdbc:postgresql:aws:test", "localhost", "5432", "test");
-    verifyUrl(drv, "jdbc:postgresql:aws://localhost/test", "localhost", "5432", "test");
-    verifyUrl(drv, "jdbc:postgresql:aws://localhost:5432/test", "localhost", "5432", "test");
-    verifyUrl(drv, "jdbc:postgresql:aws://127.0.0.1/anydbname", "127.0.0.1", "5432", "anydbname");
-    verifyUrl(drv, "jdbc:postgresql:aws://127.0.0.1:5433/hidden", "127.0.0.1", "5433", "hidden");
-    verifyUrl(drv, "jdbc:postgresql:aws://[::1]:5740/db", "[::1]", "5740", "db");
 
     // Badly formatted url's
     assertFalse(drv.acceptsURL("jdbc:postgres:test"));
@@ -112,17 +106,43 @@ public class DriverTest {
     verifyUrl(drv, "jdbc:postgresql://[::1],[::1]:5432/db", "[::1],[::1]", "5432,5432", "db");
     verifyUrl(drv, "jdbc:postgresql://[::1]:5740,127.0.0.1:5432/db", "[::1],127.0.0.1", "5740,5432",
         "db");
-
-    verifyUrl(drv, "jdbc:postgresql:aws://localhost,127.0.0.1:5432/test", "localhost,127.0.0.1",
-        "5432,5432", "test");
-    verifyUrl(drv, "jdbc:postgresql:aws://localhost:5433,127.0.0.1:5432/test", "localhost,127.0.0.1",
-        "5433,5432", "test");
-    verifyUrl(drv, "jdbc:postgresql:aws://[::1],[::1]:5432/db", "[::1],[::1]", "5432,5432", "db");
-    verifyUrl(drv, "jdbc:postgresql:aws://[::1]:5740,127.0.0.1:5432/db", "[::1],127.0.0.1", "5740,5432",
-        "db");
   }
 
-  private void verifyUrl(Driver drv, String url, String hosts, String ports, String dbName)
+  @Test
+  public void testAcceptsURLAws() throws Exception {
+    // Load the driver (note clients should never do it this way!)
+    software.aws.rds.jdbc.postgresql.Driver drv = new software.aws.rds.jdbc.postgresql.Driver();
+    assertNotNull(drv);
+
+    // These are always correct
+
+    verifyUrl(drv, "jdbc:postgresql:aws:test", "localhost", "5432", "test");
+    verifyUrl(drv, "jdbc:postgresql:aws://localhost/test", "localhost", "5432", "test");
+    verifyUrl(drv, "jdbc:postgresql:aws://localhost:5432/test", "localhost", "5432", "test");
+    verifyUrl(drv, "jdbc:postgresql:aws://127.0.0.1/anydbname", "127.0.0.1", "5432", "anydbname");
+    verifyUrl(drv, "jdbc:postgresql:aws://127.0.0.1:5433/hidden", "127.0.0.1", "5433", "hidden");
+    verifyUrl(drv, "jdbc:postgresql:aws://[::1]:5740/db", "[::1]", "5740", "db");
+
+    // Badly formatted url's
+    assertFalse(drv.acceptsURL("jdbc:postgres:aws:test"));
+    assertFalse(drv.acceptsURL("postgresql:aws:test"));
+    assertFalse(drv.acceptsURL("db"));
+    assertFalse(drv.acceptsURL("jdbc:postgresql:aws://localhost:5432a/test"));
+    assertFalse(drv.acceptsURL("jdbc:postgresql:aws://localhost:500000/test"));
+    assertFalse(drv.acceptsURL("jdbc:postgresql:aws://localhost:0/test"));
+    assertFalse(drv.acceptsURL("jdbc:postgresql:aws://localhost:-2/test"));
+
+    // failover urls
+    verifyUrl(drv, "jdbc:postgresql:aws://localhost,127.0.0.1:5432/test", "localhost,127.0.0.1",
+            "5432,5432", "test");
+    verifyUrl(drv, "jdbc:postgresql:aws://localhost:5433,127.0.0.1:5432/test", "localhost,127.0.0.1",
+            "5433,5432", "test");
+    verifyUrl(drv, "jdbc:postgresql:aws://[::1],[::1]:5432/db", "[::1],[::1]", "5432,5432", "db");
+    verifyUrl(drv, "jdbc:postgresql:aws://[::1]:5740,127.0.0.1:5432/db", "[::1],127.0.0.1", "5740,5432",
+            "db");
+  }
+
+  private void verifyUrl(java.sql.Driver drv, String url, String hosts, String ports, String dbName)
       throws Exception {
     assertTrue(url, drv.acceptsURL(url));
     Method parseMethod =
@@ -256,7 +276,7 @@ public class DriverTest {
       props.setProperty("loggerLevel", "DEBUG");
       con = DriverManager.getConnection(TestUtil.getURL(), props);
 
-      Logger logger = Logger.getLogger("software.aws.rds.jdbc.postgresql");
+      Logger logger = Logger.getLogger("org.postgresql");
       Handler[] handlers = logger.getHandlers();
       assertTrue(handlers[0] instanceof LogWriterHandler );
       con.close();
@@ -285,7 +305,7 @@ public class DriverTest {
       props.setProperty("loggerLevel", "DEBUG");
       con = DriverManager.getConnection(TestUtil.getURL(), props);
 
-      Logger logger = Logger.getLogger("software.aws.rds.jdbc.postgresql");
+      Logger logger = Logger.getLogger("org.postgresql");
       Handler []handlers = logger.getHandlers();
       assertTrue( handlers[0] instanceof LogWriterHandler );
       con.close();

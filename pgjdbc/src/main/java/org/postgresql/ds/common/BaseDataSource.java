@@ -1216,7 +1216,7 @@ public abstract class BaseDataSource implements CommonDataSource, Referenceable 
    */
   public String getUrl() {
     StringBuilder url = new StringBuilder(100);
-    url.append("jdbc:postgresql:");
+    url.append("jdbc:postgresql://");
     for (int i = 0; i < serverNames.length; i++) {
       if (i > 0) {
         url.append(",");
