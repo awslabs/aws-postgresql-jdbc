@@ -59,6 +59,10 @@ public class TestUtil {
     return getURL(getServer(), + getPort());
   }
 
+  public static String getAwsURL() {
+    return getURL().replace("jdbc:postgresql://", "jdbc:postgresql:aws://");
+  }
+
   public static String getURL(String server, int port) {
     return getURL(server + ":" + port, getDatabase());
   }
@@ -285,6 +289,18 @@ public class TestUtil {
 
       initialized = true;
     }
+  }
+
+  public static void initAwsDriver() {
+
+    try {
+      software.aws.rds.jdbc.postgresql.Driver.register();
+    } catch (Exception e) { }
+
+    Properties p = loadPropertyFiles("build.properties");
+    p.putAll(System.getProperties());
+    System.getProperties().putAll(p);
+
   }
 
   /**
@@ -1168,6 +1184,6 @@ public class TestUtil {
   public static void communityDriverOnly() throws SQLException {
 
     deregisterAwsDriver();
-    registerAwsDriver();
+    registerCommunityDriver();
   }
 }
