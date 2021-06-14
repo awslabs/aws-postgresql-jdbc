@@ -67,7 +67,7 @@ import java.util.logging.StreamHandler;
  */
 public class Driver extends org.postgresql.Driver {
   public static final String AWS_PROTOCOL = "jdbc:postgresql:aws:";
-  private static software.aws.rds.jdbc.postgresql.Driver registeredDriver;
+  private static @Nullable Driver registeredDriver;
   private static final Logger PARENT_LOGGER = Logger.getLogger(shadingPrefix("software.aws.rds.jdbc.postgresql"));
   private static final Logger LOGGER = Logger.getLogger(shadingPrefix("software.aws.rds.jdbc.postgresql.Driver"));
 
