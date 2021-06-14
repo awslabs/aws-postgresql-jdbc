@@ -1214,7 +1214,7 @@ public class TestUtil {
 
   /**
    * Ensures that only the community driver is registered
-   * @throws SQLException
+   * @throws SQLException if there is an error attempting to deregister the driver
    */
   public static void communityDriverOnly() throws SQLException {
 
