@@ -43,15 +43,15 @@ public class AwsDriverTest {
 
   @Before
   public void setUp() throws SQLException {
-    try {
+
+    if (org.postgresql.Driver.isRegistered()) {
       org.postgresql.Driver.deregister();
-    } catch (Exception e) {
-      // Do nothing because already deregistered();
     }
-    try {
+
+    if (!software.aws.rds.jdbc.postgresql.Driver.isRegistered()) {
+
       software.aws.rds.jdbc.postgresql.Driver.register();
-    } catch (Exception e) {
-      // Do nothing because already registered
+
     }
   }
 

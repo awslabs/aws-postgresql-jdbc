@@ -41,17 +41,14 @@ import java.util.logging.Logger;
 public class DriverTest {
 
   @Before
-  public void setUp() {
+  public void setUp() throws SQLException {
 
-    try {
+    if (software.aws.rds.jdbc.postgresql.Driver.isRegistered()) {
       software.aws.rds.jdbc.postgresql.Driver.deregister();
-    } catch (Exception e) {
-      // Do nothing because it is already deregistered.
     }
-    try {
+
+    if (!org.postgresql.Driver.isRegistered()) {
       org.postgresql.Driver.register();
-    } catch (Exception e) {
-      // Do nothing because the driver is already registered.
     }
 
   }

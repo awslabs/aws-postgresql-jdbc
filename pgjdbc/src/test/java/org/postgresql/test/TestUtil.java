@@ -50,6 +50,7 @@ public class TestUtil {
    */
   public static final String SERVER_HOST_PORT_PROP = "_test_hostport";
   public static final String DATABASE_PROP = "_test_database";
+  private static final Object lockObject = new Object();
 
   /*
    * Returns the Test database JDBC URL
@@ -242,8 +243,6 @@ public class TestUtil {
     }
   }
 
-  private static boolean initialized = false;
-
   public static Properties loadPropertyFiles(String... names) {
     Properties p = new Properties();
     for (String name : names) {
@@ -269,8 +268,8 @@ public class TestUtil {
   }
 
   public static void initDriver() {
-    synchronized (TestUtil.class) {
-      if (initialized && Driver.isRegistered()) {
+    synchronized (lockObject) {
+      if (Driver.isRegistered()) {
         return;
       }
 
@@ -282,7 +281,6 @@ public class TestUtil {
       p.putAll(System.getProperties());
       System.getProperties().putAll(p);
 
-      initialized = true;
     }
   }
 
