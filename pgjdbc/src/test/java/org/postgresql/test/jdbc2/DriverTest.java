@@ -19,6 +19,7 @@ import org.postgresql.util.LogWriterHandler;
 import org.postgresql.util.NullOutputStream;
 import org.postgresql.util.URLCoder;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,8 +41,24 @@ import java.util.logging.Logger;
 public class DriverTest {
 
   @Before
-  public void ensureCommunityDriverOnly() throws SQLException {
-    TestUtil.communityDriverOnly();
+  public void setUp(() {
+
+    try {
+      software.aws.rds.jdbc.postgresql.Driver.deregister();
+    } catch (Exception e) {
+      // Do nothing because it is already deregistered.
+    }
+    try {
+      org.postgresql.Driver.register();
+    } catch (Exception e) {
+      // Do nothing because the driver is already registered.
+    }
+
+  }
+
+  @After
+  public void cleanUp() throws SQLException {
+    org.postgresql.Driver.deregister();
   }
 
   @Test
@@ -67,7 +84,6 @@ public class DriverTest {
    */
   @Test
   public void testAcceptsURL() throws Exception {
-    TestUtil.initDriver(); // Set up log levels, etc.
 
     // Load the driver (note clients should never do it this way!)
     org.postgresql.Driver drv = new org.postgresql.Driver();
@@ -117,7 +133,6 @@ public class DriverTest {
    */
   @Test
   public void testConnect() throws Exception {
-    TestUtil.initDriver(); // Set up log levels, etc.
 
     // Test with the url, username & password
     Connection con =
@@ -156,7 +171,6 @@ public class DriverTest {
    */
   @Test
   public void testReadOnly() throws Exception {
-    TestUtil.initDriver(); // Set up log levels, etc.
 
     Connection con = DriverManager.getConnection(TestUtil.getURL() + "&readOnly=true",
             TestUtil.getUser(), TestUtil.getPassword());
@@ -179,10 +193,8 @@ public class DriverTest {
 
   @Test
   public void testRegistration() throws Exception {
-    TestUtil.initDriver();
 
-    // Driver needs to be registered because automatic driver registration is disabled for community driver
-    TestUtil.registerCommunityDriver();
+    // Driver is initially registered because it is automatically done when class is loaded
     assertTrue(org.postgresql.Driver.isRegistered());
 
     ArrayList<java.sql.Driver> drivers = Collections.list(DriverManager.getDrivers());
@@ -197,7 +209,8 @@ public class DriverTest {
     }
 
     // Deregister the driver
-    TestUtil.deregisterCommunityDriver();
+    Driver.deregister();
+    assertFalse(Driver.isRegistered());
 
     drivers = Collections.list(DriverManager.getDrivers());
     for (java.sql.Driver driver : drivers) {
@@ -207,7 +220,7 @@ public class DriverTest {
     }
 
     // register again the driver
-    TestUtil.registerCommunityDriver();
+    Driver.register();
     assertTrue(Driver.isRegistered());
 
     drivers = Collections.list(DriverManager.getDrivers());
@@ -287,5 +300,9 @@ public class DriverTest {
     } else {
       System.setProperty(key, value);
     }
+  }
+
+  private String getAwsURL() {
+    return TestUtil.getURL().replace("jdbc:postgresql://", "jdbc:postgresql:aws://");
   }
 }

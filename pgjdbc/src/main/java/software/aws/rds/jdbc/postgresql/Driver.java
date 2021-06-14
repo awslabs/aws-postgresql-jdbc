@@ -67,7 +67,7 @@ import java.util.logging.StreamHandler;
  */
 public class Driver extends org.postgresql.Driver {
   public static final String AWS_PROTOCOL = "jdbc:postgresql:aws:";
-
+  private static software.aws.rds.jdbc.postgresql.Driver registeredDriver;
   private static final Logger PARENT_LOGGER = Logger.getLogger(shadingPrefix("software.aws.rds.jdbc.postgresql"));
   private static final Logger LOGGER = Logger.getLogger(shadingPrefix("software.aws.rds.jdbc.postgresql.Driver"));
 
@@ -438,21 +438,22 @@ public class Driver extends org.postgresql.Driver {
    * @throws SQLException if the connection could not be made
    */
   private static @Nullable Connection makeConnection(String url, Properties props) throws SQLException {
-    if (url.startsWith(AWS_PROTOCOL)) {
-      ClusterAwareConnectionProxy connProxy = new ClusterAwareConnectionProxy(hostSpecs(props)[0], props, url);
 
-      if (connProxy.isFailoverEnabled()) {
-        return (Connection)
-            java.lang.reflect.Proxy.newProxyInstance(
-                Connection.class.getClassLoader(),
-                new Class<?>[] {Connection.class},
-                connProxy);
-      }
-      return connProxy.getConnection();
-    } else {
+    if (!url.startsWith(AWS_PROTOCOL)) {
 
       return null;
     }
+
+    ClusterAwareConnectionProxy connProxy = new ClusterAwareConnectionProxy(hostSpecs(props)[0], props, url);
+
+    if (connProxy.isFailoverEnabled()) {
+      return (Connection)
+          java.lang.reflect.Proxy.newProxyInstance(
+              Connection.class.getClassLoader(),
+              new Class<?>[] {Connection.class},
+              connProxy);
+    }
+    return connProxy.getConnection();
   }
 
   /**

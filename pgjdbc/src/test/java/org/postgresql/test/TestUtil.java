@@ -32,7 +32,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -57,10 +56,6 @@ public class TestUtil {
    */
   public static String getURL() {
     return getURL(getServer(), + getPort());
-  }
-
-  public static String getAwsURL() {
-    return getURL().replace("jdbc:postgresql://", "jdbc:postgresql:aws://");
   }
 
   public static String getURL(String server, int port) {
@@ -247,7 +242,6 @@ public class TestUtil {
     }
   }
 
-  // Flag to determine whether or not org.postgresql.Driver is regsitered or not.
   private static boolean initialized = false;
 
   public static Properties loadPropertyFiles(String... names) {
@@ -276,12 +270,12 @@ public class TestUtil {
 
   public static void initDriver() {
     synchronized (TestUtil.class) {
-      if (initialized) {
+      if (initialized && Driver.isRegistered()) {
         return;
       }
 
       try {
-        DriverManager.registerDriver(new Driver());
+        Driver.register();
       } catch (Exception e) { }
 
       Properties p = loadPropertyFiles("build.properties");
@@ -290,18 +284,6 @@ public class TestUtil {
 
       initialized = true;
     }
-  }
-
-  public static void initAwsDriver() {
-
-    try {
-      software.aws.rds.jdbc.postgresql.Driver.register();
-    } catch (Exception e) { }
-
-    Properties p = loadPropertyFiles("build.properties");
-    p.putAll(System.getProperties());
-    System.getProperties().putAll(p);
-
   }
 
   /**
@@ -355,7 +337,6 @@ public class TestUtil {
    */
   public static Connection openDB(Properties props) throws SQLException {
     initDriver();
-    registerCommunityDriver();
     // Allow properties to override the user name.
     String user = props.getProperty("username");
     if (user == null) {
@@ -1117,108 +1098,4 @@ public class TestUtil {
     }
   }
 
-  /**
-   * Registers the community driver if it isn't already registered
-   * @throws SQLException if there is an error registering the driver
-   */
-  public static void registerCommunityDriver() throws SQLException {
-
-    boolean isCommunityRegistered = false;
-    ArrayList<java.sql.Driver> drivers = Collections.list(DriverManager.getDrivers());
-    for (java.sql.Driver driver: drivers) {
-
-      if (driver instanceof org.postgresql.Driver && !(driver instanceof software.aws.rds.jdbc.postgresql.Driver)) {
-        isCommunityRegistered = true;
-        break;
-      }
-    }
-    if (!isCommunityRegistered) {
-
-      synchronized (TestUtil.class) {
-
-        initialized = true;
-        DriverManager.registerDriver(new org.postgresql.Driver());
-
-      }
-    }
-
-  }
-
-  /**
-   * Registers the AWS driver if it isn't already registered
-   * @throws SQLException if there is an error registering the driver
-   */
-  public static void registerAwsDriver() throws SQLException {
-
-    boolean isAwsRegistered = false;
-    ArrayList<java.sql.Driver> drivers = Collections.list(DriverManager.getDrivers());
-    for (java.sql.Driver driver: drivers) {
-
-      if (driver instanceof software.aws.rds.jdbc.postgresql.Driver) {
-        isAwsRegistered = true;
-        break;
-      }
-    }
-    if (!isAwsRegistered) {
-
-      DriverManager.registerDriver(new software.aws.rds.jdbc.postgresql.Driver());
-    }
-  }
-
-  /**
-   * Deregister the community driver if it is registered
-   * @throws SQLException if there is an error deregistering the driver
-   */
-  public static void deregisterCommunityDriver() throws SQLException {
-
-    ArrayList<java.sql.Driver> drivers = Collections.list(DriverManager.getDrivers());
-    for (java.sql.Driver driver: drivers) {
-
-      if (driver instanceof org.postgresql.Driver && !(driver instanceof software.aws.rds.jdbc.postgresql.Driver)) {
-        synchronized (TestUtil.class) {
-
-          initialized = false;
-          DriverManager.deregisterDriver(driver);
-
-        }
-      }
-    }
-
-  }
-
-  /**
-   * Deregisters the AWS driver if it is registered
-   * @throws SQLException if there is an error attempting to deregister the driver
-   */
-  public static void deregisterAwsDriver() throws SQLException {
-
-    ArrayList<java.sql.Driver> drivers = Collections.list(DriverManager.getDrivers());
-    for (java.sql.Driver driver: drivers) {
-
-      if (driver instanceof software.aws.rds.jdbc.postgresql.Driver) {
-        DriverManager.deregisterDriver(driver);
-      }
-    }
-
-  }
-
-  /**
-   * Ensures that only the aws driver is registered
-   * @throws SQLException if there is an error attempting to deregister the driver
-   */
-  public static void awsDriverOnly() throws SQLException {
-
-    deregisterCommunityDriver();
-    registerAwsDriver();
-  }
-
-  /**
-   * Ensures that only the community driver is registered
-   * @throws SQLException if there is an error attempting to deregister the driver
-   */
-  public static void communityDriverOnly() throws SQLException {
-
-    deregisterAwsDriver();
-    registerCommunityDriver();
-  }
 }

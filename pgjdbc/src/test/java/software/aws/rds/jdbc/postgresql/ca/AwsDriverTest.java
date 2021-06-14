@@ -15,8 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import software.aws.rds.jdbc.postgresql.Driver;
 
-import org.junit.BeforeClass;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.jupiter.api.Test;
 import org.postgresql.PGProperty;
 import org.postgresql.test.TestUtil;
@@ -41,15 +41,23 @@ import java.util.logging.Logger;
  */
 public class AwsDriverTest {
 
-  @BeforeClass
+  @Before
   public void setUp() throws SQLException {
-    // Makes sure that community driver is not registered
-    TestUtil.awsDriverOnly();
+    try {
+      org.postgresql.Driver.deregister();
+    } catch (Exception e) {
+      // Do nothing because already deregistered();
+    }
+    try {
+      software.aws.rds.jdbc.postgresql.Driver.register();
+    } catch (Exception e) {
+      // Do nothing because already registered
+    }
   }
 
-  @BeforeEach
-  public void initDriver() {
-    TestUtil.initAwsDriver(); // Set up log levels, etc.
+  @After
+  public void cleanUp() throws SQLException {
+    software.aws.rds.jdbc.postgresql.Driver.deregister();
   }
 
   @Test
@@ -134,13 +142,13 @@ public class AwsDriverTest {
   @Test
   public void testConnect() throws Exception { // Test with the url, username & password
     Connection con =
-        DriverManager.getConnection(TestUtil.getAwsURL(), TestUtil.getUser(), TestUtil.getPassword());
+        DriverManager.getConnection(getAwsURL(), TestUtil.getUser(), TestUtil.getPassword());
     assertNotNull(con);
     con.close();
 
     // Test with the username in the url
     con = DriverManager.getConnection(
-        TestUtil.getAwsURL()
+        getAwsURL()
                 + "&user=" + URLCoder.encode(TestUtil.getUser())
                 + "&password=" + URLCoder.encode(TestUtil.getPassword()));
     assertNotNull(con);
@@ -154,20 +162,20 @@ public class AwsDriverTest {
    */
   @Test
   public void testReadOnly() throws Exception {
-    Connection con = DriverManager.getConnection(TestUtil.getAwsURL() + "&readOnly=true",
+    Connection con = DriverManager.getConnection(getAwsURL() + "&readOnly=true",
         TestUtil.getUser(), TestUtil.getPassword());
     assertNotNull(con);
     assertTrue(con.isReadOnly());
     con.close();
 
-    con = DriverManager.getConnection(TestUtil.getAwsURL() + "&readOnly=false", TestUtil.getUser(),
+    con = DriverManager.getConnection(getAwsURL() + "&readOnly=false", TestUtil.getUser(),
         TestUtil.getPassword());
     assertNotNull(con);
     assertFalse(con.isReadOnly());
     con.close();
 
     con =
-        DriverManager.getConnection(TestUtil.getAwsURL(), TestUtil.getUser(), TestUtil.getPassword());
+        DriverManager.getConnection(getAwsURL(), TestUtil.getUser(), TestUtil.getPassword());
     assertNotNull(con);
     assertFalse(con.isReadOnly());
     con.close();
@@ -217,7 +225,7 @@ public class AwsDriverTest {
   public void testSetLogWriter() throws Exception {
 
     // this is a dummy to make sure TestUtil is initialized
-    Connection con = DriverManager.getConnection(TestUtil.getAwsURL(), TestUtil.getUser(), TestUtil.getPassword());
+    Connection con = DriverManager.getConnection(getAwsURL(), TestUtil.getUser(), TestUtil.getPassword());
     con.close();
     String loggerLevel = System.getProperty("loggerLevel");
     String loggerFile = System.getProperty("loggerFile");
@@ -233,7 +241,7 @@ public class AwsDriverTest {
       props.setProperty("user", TestUtil.getUser());
       props.setProperty("password", TestUtil.getPassword());
       props.setProperty("loggerLevel", "DEBUG");
-      con = DriverManager.getConnection(TestUtil.getAwsURL(), props);
+      con = DriverManager.getConnection(getAwsURL(), props);
 
       Logger logger = Logger.getLogger("software.aws.rds.jdbc.postgresql");
       Handler[] handlers = logger.getHandlers();
@@ -249,7 +257,7 @@ public class AwsDriverTest {
   @Test
   public void testSetLogStream() throws Exception {
     // this is a dummy to make sure TestUtil is initialized
-    Connection con = DriverManager.getConnection(TestUtil.getAwsURL(), TestUtil.getUser(), TestUtil.getPassword());
+    Connection con = DriverManager.getConnection(getAwsURL(), TestUtil.getUser(), TestUtil.getPassword());
     con.close();
     String loggerLevel = System.getProperty("loggerLevel");
     String loggerFile = System.getProperty("loggerFile");
@@ -262,7 +270,7 @@ public class AwsDriverTest {
       props.setProperty("user", TestUtil.getUser());
       props.setProperty("password", TestUtil.getPassword());
       props.setProperty("loggerLevel", "DEBUG");
-      con = DriverManager.getConnection(TestUtil.getAwsURL(), props);
+      con = DriverManager.getConnection(getAwsURL(), props);
 
       Logger logger = Logger.getLogger("software.aws.rds.jdbc.postgresql");
       Handler []handlers = logger.getHandlers();
@@ -281,5 +289,9 @@ public class AwsDriverTest {
     } else {
       System.setProperty(key, value);
     }
+  }
+
+  private String getAwsURL() {
+    return TestUtil.getURL().replace("jdbc:postgresql://", "jdbc:postgresql:aws://");
   }
 }
