@@ -41,7 +41,7 @@ import java.util.logging.Logger;
 public class DriverTest {
 
   @Before
-  public void setUp(() {
+  public void setUp() {
 
     try {
       software.aws.rds.jdbc.postgresql.Driver.deregister();
