@@ -267,7 +267,7 @@ public class TestUtil {
     return p;
   }
 
-  public static void initDriver() {
+  public static synchronized void initDriver() {
     synchronized (lockObject) {
       if (Driver.isRegistered()) {
         return;
