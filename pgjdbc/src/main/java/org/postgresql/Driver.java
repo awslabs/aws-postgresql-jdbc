@@ -704,7 +704,7 @@ public class Driver implements java.sql.Driver {
    *
    * @throws SQLException when used.
    */
-  public static void register() throws SQLException {
+  public static synchronized void register() throws SQLException {
     if (isRegistered()) {
       throw new IllegalStateException(
               "Driver is already registered. It can only be registered once.");
@@ -721,7 +721,7 @@ public class Driver implements java.sql.Driver {
    *
    * @throws SQLException when used.
    */
-  public static void deregister() throws SQLException {
+  public static synchronized void deregister() throws SQLException {
     if (registeredDriver == null) {
       throw new IllegalStateException(
               "Driver is not registered (or it has not been registered using Driver.register() method)");

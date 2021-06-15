@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import software.aws.rds.jdbc.postgresql.Driver;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.jupiter.api.Test;
 import org.postgresql.PGProperty;
@@ -44,20 +43,11 @@ public class AwsDriverTest {
   @Before
   public void setUp() throws SQLException {
 
-    if (org.postgresql.Driver.isRegistered()) {
-      org.postgresql.Driver.deregister();
-    }
-
     if (!software.aws.rds.jdbc.postgresql.Driver.isRegistered()) {
 
       software.aws.rds.jdbc.postgresql.Driver.register();
 
     }
-  }
-
-  @After
-  public void cleanUp() throws SQLException {
-    software.aws.rds.jdbc.postgresql.Driver.deregister();
   }
 
   @Test

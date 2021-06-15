@@ -19,7 +19,6 @@ import org.postgresql.util.LogWriterHandler;
 import org.postgresql.util.NullOutputStream;
 import org.postgresql.util.URLCoder;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -43,19 +42,10 @@ public class DriverTest {
   @Before
   public void setUp() throws SQLException {
 
-    if (software.aws.rds.jdbc.postgresql.Driver.isRegistered()) {
-      software.aws.rds.jdbc.postgresql.Driver.deregister();
-    }
-
     if (!org.postgresql.Driver.isRegistered()) {
       org.postgresql.Driver.register();
     }
 
-  }
-
-  @After
-  public void cleanUp() throws SQLException {
-    org.postgresql.Driver.deregister();
   }
 
   @Test

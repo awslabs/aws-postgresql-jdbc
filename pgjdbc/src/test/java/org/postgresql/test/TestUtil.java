@@ -50,7 +50,6 @@ public class TestUtil {
    */
   public static final String SERVER_HOST_PORT_PROP = "_test_hostport";
   public static final String DATABASE_PROP = "_test_database";
-  private static final Object lockObject = new Object();
 
   /*
    * Returns the Test database JDBC URL
@@ -268,20 +267,18 @@ public class TestUtil {
   }
 
   public static synchronized void initDriver() {
-    synchronized (lockObject) {
-      if (Driver.isRegistered()) {
-        return;
-      }
-
-      try {
-        Driver.register();
-      } catch (Exception e) { }
-
-      Properties p = loadPropertyFiles("build.properties");
-      p.putAll(System.getProperties());
-      System.getProperties().putAll(p);
-
+    if (Driver.isRegistered()) {
+      return;
     }
+
+    try {
+      Driver.register();
+    } catch (Exception e) { }
+
+    Properties p = loadPropertyFiles("build.properties");
+    p.putAll(System.getProperties());
+    System.getProperties().putAll(p);
+
   }
 
   /**
