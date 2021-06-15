@@ -188,7 +188,7 @@ public class DriverTest {
     searchInstanceOf: {
 
       for (java.sql.Driver driver : drivers) {
-        if (driver instanceof org.postgresql.Driver) {
+        if (driver.getClass().equals(org.postgresql.Driver.class)) {
           break searchInstanceOf;
         }
       }
@@ -201,7 +201,7 @@ public class DriverTest {
 
     drivers = Collections.list(DriverManager.getDrivers());
     for (java.sql.Driver driver : drivers) {
-      if (driver instanceof org.postgresql.Driver) {
+      if (driver.getClass().equals(org.postgresql.Driver.class)) {
         fail("Driver should be deregistered but it is still present in DriverManager's list");
       }
     }
@@ -212,7 +212,7 @@ public class DriverTest {
 
     drivers = Collections.list(DriverManager.getDrivers());
     for (java.sql.Driver driver : drivers) {
-      if (driver instanceof org.postgresql.Driver) {
+      if (driver.getClass().equals(org.postgresql.Driver.class)) {
         return;
       }
     }
