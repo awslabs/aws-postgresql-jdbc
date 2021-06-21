@@ -62,7 +62,7 @@ import java.util.logging.StreamHandler;
  */
 public class Driver implements java.sql.Driver {
 
-  protected static @Nullable Driver registeredDriver;
+  private static @Nullable Driver registeredDriver;
   private static final Logger PARENT_LOGGER = Logger.getLogger(shadingPrefix("org.postgresql"));
   private static final Logger LOGGER = Logger.getLogger(shadingPrefix("org.postgresql.Driver"));
   protected static final SharedTimer SHARED_TIMER = new SharedTimer();
@@ -704,10 +704,14 @@ public class Driver implements java.sql.Driver {
    *
    * @throws SQLException when used.
    */
-  public static void register() throws SQLException {
-    throw new SQLException(
-        "org.postgresql.Driver is not supported, "
-            + "use software.aws.rds.jdbc.postgresql.Driver instead.");
+  public static synchronized void register() throws SQLException {
+    if (isRegistered()) {
+      throw new IllegalStateException(
+              "Driver is already registered. It can only be registered once.");
+    }
+    Driver registeredDriver = new Driver();
+    DriverManager.registerDriver(registeredDriver);
+    Driver.registeredDriver = registeredDriver;
   }
 
   /**
@@ -717,10 +721,13 @@ public class Driver implements java.sql.Driver {
    *
    * @throws SQLException when used.
    */
-  public static void deregister() throws SQLException {
-    throw new SQLException(
-        "org.postgresql.Driver is not supported, "
-            + "use software.aws.rds.jdbc.postgresql.Driver instead.");
+  public static synchronized void deregister() throws SQLException {
+    if (registeredDriver == null) {
+      throw new IllegalStateException(
+              "Driver is not registered (or it has not been registered using Driver.register() method)");
+    }
+    DriverManager.deregisterDriver(registeredDriver);
+    registeredDriver = null;
   }
 
   /**

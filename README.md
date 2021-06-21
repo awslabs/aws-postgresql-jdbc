@@ -73,6 +73,10 @@ As a drop-in compatible, usage of the AWS JDBC Driver for PostgreSQL is identica
 #### Driver Name
 The driver name to use is: ```software.aws.rds.jdbc.postgresql.Driver```. This will be needed when loading the driver explicitly to the driver manager.
 
+#### Driver Protocol
+Currently, the driver only supports the following protocol for the connection string:
+`jdbc:postgresql:aws:`. The driver does not support any other protocols to avoid potential conflicts with other PostgreSQL JDBC drivers. 
+
 #### Connection URL Descriptions
 
 There are many different types of URLs that can connect to an Aurora DB cluster. For some of these URL types, the AWS JDBC Driver requires the user to provide some information about the Aurora DB cluster to provide failover functionality. This section outlines the various URL types. For each type, information is provided on how the driver will behave and what information the driver requires about the DB cluster, if applicable.
@@ -108,7 +112,6 @@ In addition to [the parameters that can be configured for the PostgreSQL JDBC Dr
 |`failoverClusterTopologyRefreshRateMs` | Integer | No | Cluster topology refresh rate in milliseconds during a writer failover process. During the writer failover process, cluster topology may be refreshed at a faster pace than normal to speed up discovery of the newly promoted writer.<br/><br/>**Default value:** `5000` |
 |`failoverWriterReconnectIntervalMs` | Integer | No | Interval of time in milliseconds to wait between attempts to reconnect to a failed writer during a writer failover process.<br/><br/>**Default value:** `5000` |
 |`failoverReaderConnectTimeoutMs` | Integer | No | Maximum allowed time in milliseconds to attempt to connect to a reader instance during a reader failover process. <br/><br/>**Default value:** `5000`
-|`acceptAwsProtocolOnly` | Boolean | If using simultaneously with another postgresql driver that supports the same protocols, it is required to set this property to true either through the connection properties or at the driver level for every connection by calling Driver.setAcceptAwsProtocolOnly(true). <br/>Otherwise: No | Set to true to only accept connections for URLs with the jdbc:postgresql:aws:// protocol. This setting should be set to true when running an application that uses this driver simultaneously with another postgresql driver that supports the same protocols (eg the PostgreSQL JDBC Driver), to ensure the driver protocols do not clash.<br/><br/>**Default value:** `false`
 |`gatherPerfMetrics` | Boolean | No | Set to true if you would like the driver to record failover-associated metrics, which will then be logged upon closing the connection. <br/><br/>**Default value:** `false` | 
 #### Failover Exception Codes
 ##### 08001 - Unable to Establish SQL Connection

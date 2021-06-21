@@ -1707,13 +1707,6 @@ public abstract class BaseDataSource implements CommonDataSource, Referenceable 
   }
 
   // Cluster Aware Failover Properties
-  public boolean getAcceptAwsProtocolOnly() {
-    return PGProperty.ACCEPT_AWS_PROTOCOL_ONLY.getBoolean(properties);
-  }
-
-  public void setAcceptAwsProtocolOnly(boolean awsProtocolOnly) {
-    PGProperty.ACCEPT_AWS_PROTOCOL_ONLY.set(properties, awsProtocolOnly);
-  }
 
   public @Nullable String getClusterId() {
     return PGProperty.CLUSTER_ID.get(properties);

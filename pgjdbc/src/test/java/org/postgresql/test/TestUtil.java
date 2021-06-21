@@ -5,6 +5,7 @@
 
 package org.postgresql.test;
 
+import org.postgresql.Driver;
 import org.postgresql.PGConnection;
 import org.postgresql.PGProperty;
 import org.postgresql.core.BaseConnection;
@@ -17,7 +18,6 @@ import org.postgresql.util.PSQLException;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.Assert;
-import software.aws.rds.jdbc.postgresql.Driver;
 
 import java.io.Closeable;
 import java.io.File;
@@ -242,8 +242,6 @@ public class TestUtil {
     }
   }
 
-  private static boolean initialized = false;
-
   public static Properties loadPropertyFiles(String... names) {
     Properties p = new Properties();
     for (String name : names) {
@@ -268,22 +266,17 @@ public class TestUtil {
     return p;
   }
 
-  public static void initDriver() {
-    synchronized (TestUtil.class) {
-      if (initialized) {
-        return;
-      }
-
-      try {
-        Driver.register();
-      } catch (Exception e) { }
-
-      Properties p = loadPropertyFiles("build.properties");
-      p.putAll(System.getProperties());
-      System.getProperties().putAll(p);
-
-      initialized = true;
+  public static synchronized void initDriver() throws SQLException {
+    if (Driver.isRegistered()) {
+      return;
     }
+
+    Driver.register();
+
+    Properties p = loadPropertyFiles("build.properties");
+    p.putAll(System.getProperties());
+    System.getProperties().putAll(p);
+
   }
 
   /**
@@ -337,7 +330,6 @@ public class TestUtil {
    */
   public static Connection openDB(Properties props) throws SQLException {
     initDriver();
-
     // Allow properties to override the user name.
     String user = props.getProperty("username");
     if (user == null) {
@@ -1098,4 +1090,5 @@ public class TestUtil {
       }
     }
   }
+
 }
