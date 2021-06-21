@@ -288,8 +288,4 @@ public class DriverTest {
       System.setProperty(key, value);
     }
   }
-
-  private String getAwsURL() {
-    return TestUtil.getURL().replace("jdbc:postgresql://", "jdbc:postgresql:aws://");
-  }
 }

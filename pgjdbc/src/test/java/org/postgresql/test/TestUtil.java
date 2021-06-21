@@ -266,14 +266,12 @@ public class TestUtil {
     return p;
   }
 
-  public static synchronized void initDriver() {
+  public static synchronized void initDriver() throws SQLException {
     if (Driver.isRegistered()) {
       return;
     }
 
-    try {
-      Driver.register();
-    } catch (Exception e) { }
+    Driver.register();
 
     Properties p = loadPropertyFiles("build.properties");
     p.putAll(System.getProperties());

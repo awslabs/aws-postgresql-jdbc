@@ -674,7 +674,7 @@ public class Driver extends org.postgresql.Driver {
    * @throws SQLException when called, indicating that
    *     software.aws.rds.jdbc.postgresql.Driver should be registered instead.
    */
-  public static void register() throws SQLException {
+  public static synchronized void register() throws SQLException {
     if (isRegistered()) {
       throw new IllegalStateException(
           "Driver is already registered. It can only be registered once.");
@@ -695,7 +695,7 @@ public class Driver extends org.postgresql.Driver {
    *     have been registered as software.aws.rds.jdbc.postgresql.Driver
    *     should be used instead of this driver.
    */
-  public static void deregister() throws SQLException {
+  public static synchronized void deregister() throws SQLException {
     if (registeredDriver == null) {
       throw new IllegalStateException(
           "org.postgresql.Driver is not supported and thus should never have been registered. "

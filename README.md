@@ -73,6 +73,10 @@ As a drop-in compatible, usage of the AWS JDBC Driver for PostgreSQL is identica
 #### Driver Name
 The driver name to use is: ```software.aws.rds.jdbc.postgresql.Driver```. This will be needed when loading the driver explicitly to the driver manager.
 
+#### Driver Protocol
+Currently, the driver only supports the following protocol for the connection string:
+`jdbc:postgresql:aws:`. The driver does not support any other protocols to avoid potential conflicts with other PostgreSQL JDBC drivers. 
+
 #### Connection URL Descriptions
 
 There are many different types of URLs that can connect to an Aurora DB cluster. For some of these URL types, the AWS JDBC Driver requires the user to provide some information about the Aurora DB cluster to provide failover functionality. This section outlines the various URL types. For each type, information is provided on how the driver will behave and what information the driver requires about the DB cluster, if applicable.
