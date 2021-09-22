@@ -19,6 +19,8 @@ import org.postgresql.core.SocketFactoryFactory;
 import org.postgresql.core.Tuple;
 import org.postgresql.core.Utils;
 import org.postgresql.core.Version;
+import org.postgresql.core.v3.plugins.AuthenticationPluginManager;
+import org.postgresql.core.v3.plugins.AwsIamAuthenticationPlugin;
 import org.postgresql.hostchooser.CandidateHost;
 import org.postgresql.hostchooser.GlobalHostStatusTracker;
 import org.postgresql.hostchooser.HostChooser;
@@ -673,7 +675,13 @@ public class ConnectionFactoryImpl extends ConnectionFactory {
                       PSQLState.CONNECTION_REJECTED);
                 }
 
-                byte[] encodedPassword = password.getBytes(StandardCharsets.UTF_8);
+                AuthenticationPluginManager pluginManager = new AuthenticationPluginManager();
+
+                if (Boolean.parseBoolean(info.getProperty(PGProperty.USE_AWS_IAM.getName()))) {
+                  pluginManager.setPlugin(new AwsIamAuthenticationPlugin());
+                }
+
+                byte[] encodedPassword = pluginManager.getPassword(user, password);
 
                 pgStream.sendChar('p');
                 pgStream.sendInteger4(4 + encodedPassword.length + 1);
