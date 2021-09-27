@@ -678,7 +678,8 @@ public class ConnectionFactoryImpl extends ConnectionFactory {
                 AuthenticationPluginManager pluginManager = new AuthenticationPluginManager();
 
                 if (Boolean.parseBoolean(info.getProperty(PGProperty.USE_AWS_IAM.getName()))) {
-                  pluginManager.setPlugin(new AwsIamAuthenticationPlugin());
+                  final int port = Integer.parseInt(info.getProperty(PGProperty.PG_PORT.getName()));
+                  pluginManager.setPlugin(new AwsIamAuthenticationPlugin(host, port));
                 }
 
                 byte[] encodedPassword = pluginManager.getPassword(user, password);
