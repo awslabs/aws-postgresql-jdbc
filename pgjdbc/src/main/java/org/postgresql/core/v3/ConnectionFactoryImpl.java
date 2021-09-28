@@ -668,18 +668,18 @@ public class ConnectionFactoryImpl extends ConnectionFactory {
                 LOGGER.log(Level.FINEST, "<=BE AuthenticationReqPassword");
                 LOGGER.log(Level.FINEST, " FE=> Password(password=<not shown>)");
 
-                if (password == null) {
-                  throw new PSQLException(
-                      GT.tr(
-                          "The server requested password-based authentication, but no password was provided."),
-                      PSQLState.CONNECTION_REJECTED);
-                }
-
-                AuthenticationPluginManager pluginManager = new AuthenticationPluginManager();
+                final AuthenticationPluginManager pluginManager = new AuthenticationPluginManager();
 
                 if (Boolean.parseBoolean(info.getProperty(PGProperty.USE_AWS_IAM.getName()))) {
                   final int port = Integer.parseInt(info.getProperty(PGProperty.PG_PORT.getName()));
                   pluginManager.setPlugin(new AwsIamAuthenticationPlugin(host, port));
+                } else {
+                  if (password == null) {
+                    throw new PSQLException(
+                        GT.tr(
+                            "The server requested password-based authentication, but no password was provided."),
+                        PSQLState.CONNECTION_REJECTED);
+                  }
                 }
 
                 byte[] encodedPassword = pluginManager.getPassword(user, password);
