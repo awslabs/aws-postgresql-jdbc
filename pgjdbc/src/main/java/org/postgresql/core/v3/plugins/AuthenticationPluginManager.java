@@ -9,9 +9,9 @@ package org.postgresql.core.v3.plugins;
 public class AuthenticationPluginManager {
 
   // Use native password plugin by default.
-  private AuthenticationPlugin plugin = new NativePasswordPlugin();
+  private IAuthenticationPlugin plugin = new NativePasswordPlugin();
 
-  public void setPlugin(final AuthenticationPlugin plugin) {
+  public void setPlugin(final IAuthenticationPlugin plugin) {
     this.plugin = plugin;
   }
 

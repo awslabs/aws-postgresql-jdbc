@@ -7,7 +7,7 @@ package org.postgresql.core.v3.plugins;
 
 import java.nio.charset.StandardCharsets;
 
-public class NativePasswordPlugin implements AuthenticationPlugin {
+public class NativePasswordPlugin implements IAuthenticationPlugin {
 
   @Override
   public byte[] getEncodedPassword(String user, String password) {

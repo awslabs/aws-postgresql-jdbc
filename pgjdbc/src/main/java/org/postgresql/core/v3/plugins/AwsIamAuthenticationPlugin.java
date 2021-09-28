@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class AwsIamAuthenticationPlugin implements AuthenticationPlugin {
+public class AwsIamAuthenticationPlugin implements IAuthenticationPlugin {
 
   private static final int REGION_MATCHER_GROUP = 3;
   private String password = "";

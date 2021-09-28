@@ -6,6 +6,6 @@
 
 package org.postgresql.core.v3.plugins;
 
-public interface AuthenticationPlugin {
+public interface IAuthenticationPlugin {
   byte[] getEncodedPassword(String user, String password);
 }

@@ -671,6 +671,17 @@ public class ConnectionFactoryImpl extends ConnectionFactory {
                 final AuthenticationPluginManager pluginManager = new AuthenticationPluginManager();
 
                 if (Boolean.parseBoolean(info.getProperty(PGProperty.USE_AWS_IAM.getName()))) {
+                  // Ensure the AWS Java SDK for Amazon RDS exists in the classpath.
+                  try {
+                    Class.forName("com.amazonaws.auth.AWSCredentialsProvider");
+                  } catch (final ClassNotFoundException e) {
+                    LOGGER.log(Level.FINEST, "Attempt to use AWS IAM database authentication failed due to missing AWS Java SDK for Amazon RDS.");
+                    throw new PSQLException(
+                        GT.tr(
+                            "Unable to connect using AWS IAM authentication due to missing AWS Java SDK for Amazon RDS. Add dependency to classpath."),
+                        PSQLState.CONNECTION_REJECTED);
+                  }
+
                   final int port = Integer.parseInt(info.getProperty(PGProperty.PG_PORT.getName()));
                   pluginManager.setPlugin(new AwsIamAuthenticationPlugin(host, port));
                 } else {
