@@ -31,6 +31,11 @@ buildscript {
     }
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 val shaded by configurations.creating
 
 val karafFeatures by configurations.creating {
