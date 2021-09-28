@@ -6,16 +6,16 @@
 
 package software.aws.rds.jdbc.postgresql.ca;
 
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.Properties;
-
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.postgresql.Driver;
 import org.postgresql.PGProperty;
 import org.postgresql.util.PSQLException;
+
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Properties;
 
 @Disabled
 public class AwsIamAuthenticationIntegrationTests {
