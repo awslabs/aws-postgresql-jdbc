@@ -3,8 +3,6 @@ package software.aws.rds.jdbc.postgresql.ca;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.postgresql.PGProperty;
 import org.postgresql.util.PSQLException;
 
@@ -13,14 +11,11 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 @Disabled
-@TestMethodOrder(MethodOrderer.Alphanumeric.class)
 public class AwsIamAuthenticationIntegrationTests {
 
   private static final String CONNECTION_STRING_PREFIX = "jdbc:postgresql:aws://";
-  private static final String CONNECTION_STRING = CONNECTION_STRING_PREFIX + System.getenv("PG_AURORA_CLUSTER_IDENTIFIER");
-  private static final String SSL_CERTIFICATE = "src/test/java/software/aws/rds/jdbc/postgresql/ca/certs/rds-ca-2019-root.pem";
-  private static final String SSL_MODE = "verify-full";
-  private static final String VALID_AWS_DB_USER = System.getenv("AWS_DB_USER");
+  private static final String CONNECTION_STRING = CONNECTION_STRING_PREFIX + System.getenv("PG_AURORA_INSTANCE_ENDPOINT");
+  private static final String VALID_AWS_DB_USER = System.getenv("PG_AURORA_IAM_USER");
 
   @Test
   public void test_1_ValidAwsIamUser() throws SQLException {
@@ -47,8 +42,6 @@ public class AwsIamAuthenticationIntegrationTests {
       properties.setProperty(PGProperty.PASSWORD.getName(), password);
     }
     properties.setProperty(PGProperty.USE_AWS_IAM.getName(), Boolean.TRUE.toString());
-    properties.setProperty(PGProperty.SSL_MODE.getName(), SSL_MODE);
-    properties.setProperty(PGProperty.SSL_ROOT_CERT.getName(), SSL_CERTIFICATE);
 
     return properties;
   }
