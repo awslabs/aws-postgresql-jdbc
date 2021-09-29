@@ -9,6 +9,7 @@ package org.postgresql.core.v3.plugins;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.rds.auth.GetIamAuthTokenRequest;
 import com.amazonaws.services.rds.auth.RdsIamAuthTokenGenerator;
+import org.checkerframework.checker.initialization.qual.UnderInitialization;
 
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
@@ -22,6 +23,7 @@ public class AwsIamAuthenticationPlugin implements IAuthenticationPlugin {
   private final String hostname;
   private final int port;
 
+  @UnderInitialization
   public AwsIamAuthenticationPlugin(final String hostname, final int port) {
     this.hostname = hostname;
     this.port = port;

@@ -38,6 +38,7 @@ import org.postgresql.util.PSQLState;
 import org.postgresql.util.ServerErrorMessage;
 import org.postgresql.util.internal.Unsafe;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
@@ -682,7 +683,8 @@ public class ConnectionFactoryImpl extends ConnectionFactory {
                         PSQLState.CONNECTION_REJECTED);
                   }
 
-                  final int port = Integer.parseInt(info.getProperty(PGProperty.PG_PORT.getName()));
+                  @NonNull final String portProperty = info.getProperty(PGProperty.PG_PORT.getName());
+                  final int port = Integer.parseInt(portProperty);
                   pluginManager.setPlugin(new AwsIamAuthenticationPlugin(host, port));
                 } else {
                   if (password == null) {
