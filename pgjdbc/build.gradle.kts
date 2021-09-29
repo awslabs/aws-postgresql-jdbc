@@ -34,6 +34,11 @@ buildscript {
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+
+    // Register AWS IAM authentication as a feature variant.
+    registerFeature("awsIamAuthentication") {
+        usingSourceSet(sourceSets["main"])
+    }
 }
 
 val shaded by configurations.creating
@@ -59,7 +64,7 @@ dependencies {
     shaded(platform(project(":bom")))
     shaded("com.ongres.scram:client")
 
-    implementation("com.amazonaws:aws-java-sdk-rds:1.11.875")
+    "awsIamAuthenticationImplementation"("com.amazonaws:aws-java-sdk-rds:1.11.875")
     implementation("org.checkerframework:checker-qual")
     testImplementation("se.jiderhamn:classloader-leak-test-framework")
 }
