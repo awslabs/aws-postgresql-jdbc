@@ -19,6 +19,8 @@ import org.postgresql.core.SocketFactoryFactory;
 import org.postgresql.core.Tuple;
 import org.postgresql.core.Utils;
 import org.postgresql.core.Version;
+import org.postgresql.core.v3.plugins.AuthenticationPluginManager;
+import org.postgresql.core.v3.plugins.AwsIamAuthenticationPlugin;
 import org.postgresql.hostchooser.CandidateHost;
 import org.postgresql.hostchooser.GlobalHostStatusTracker;
 import org.postgresql.hostchooser.HostChooser;
@@ -76,6 +78,7 @@ public class ConnectionFactoryImpl extends ConnectionFactory {
   private static final int AUTH_REQ_SASL = 10;
   private static final int AUTH_REQ_SASL_CONTINUE = 11;
   private static final int AUTH_REQ_SASL_FINAL = 12;
+  private static final int DEFAULT_PORT = 5342;
 
   private ISSPIClient createSSPI(PGStream pgStream,
       @Nullable String spnServiceClass,
@@ -666,6 +669,31 @@ public class ConnectionFactoryImpl extends ConnectionFactory {
                 LOGGER.log(Level.FINEST, "<=BE AuthenticationReqPassword");
                 LOGGER.log(Level.FINEST, " FE=> Password(password=<not shown>)");
 
+                final AuthenticationPluginManager pluginManager = new AuthenticationPluginManager();
+
+                if (Boolean.parseBoolean(info.getProperty(PGProperty.USE_AWS_IAM.getName()))) {
+                  // Ensure the AWS Java SDK for Amazon RDS exists in the classpath.
+                  try {
+                    Class.forName("com.amazonaws.auth.AWSCredentialsProvider");
+                  } catch (final ClassNotFoundException e) {
+                    LOGGER.log(Level.FINEST, "Attempt to use AWS IAM database authentication failed due to missing AWS Java SDK for Amazon RDS.");
+                    throw new PSQLException(
+                        GT.tr(
+                            "Unable to connect using AWS IAM authentication due to missing AWS Java SDK for Amazon RDS. Add dependency to classpath."),
+                        PSQLState.CONNECTION_REJECTED);
+                  }
+
+                  final String portProperty = info.getProperty(PGProperty.PG_PORT.getName());
+                  final int port = (portProperty == null)
+                      ? DEFAULT_PORT
+                      : Integer.parseInt(portProperty);
+
+                  pluginManager.setPlugin(new AwsIamAuthenticationPlugin(host, port));
+
+                  // Clear password if AWS IAM database authentication is in use.
+                  password = "";
+                }
+
                 if (password == null) {
                   throw new PSQLException(
                       GT.tr(
@@ -673,7 +701,7 @@ public class ConnectionFactoryImpl extends ConnectionFactory {
                       PSQLState.CONNECTION_REJECTED);
                 }
 
-                byte[] encodedPassword = password.getBytes(StandardCharsets.UTF_8);
+                byte[] encodedPassword = pluginManager.getPassword(user, password);
 
                 pgStream.sendChar('p');
                 pgStream.sendInteger4(4 + encodedPassword.length + 1);

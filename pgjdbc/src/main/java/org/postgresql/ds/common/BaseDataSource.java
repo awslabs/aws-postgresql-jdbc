@@ -1779,4 +1779,12 @@ public abstract class BaseDataSource implements CommonDataSource, Referenceable 
   public void setGatherPerfMetrics(boolean gatherPerfMetrics) {
     PGProperty.GATHER_PERF_METRICS.set(properties, gatherPerfMetrics);
   }
+
+  public boolean isUseAwsIam() {
+    return PGProperty.USE_AWS_IAM.getBoolean(properties);
+  }
+
+  public void setUseAwsIam(boolean useAwsIam) {
+    PGProperty.USE_AWS_IAM.set(properties, useAwsIam);
+  }
 }

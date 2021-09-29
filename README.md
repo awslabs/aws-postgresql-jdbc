@@ -293,6 +293,67 @@ public class FailoverSampleApp2 {
 >1. A common practice when using JDBC drivers is to wrap invocations against a Connection object in a try-catch block, and dispose of the Connection object if an Exception was hit. If this practice is left unaltered, the application will lose the fast-failover functionality offered by the Driver. When failover occurs, the Driver internally establishes a ready-to-use connection inside the original Connection object before throwing an exception to the user. If this Connection object is disposed of, the newly established connection will be thrown away. The correct practice is to check the SQL error code of the exception and reuse the Connection object if the error code indicates successful failover. [FailoverSampleApp1](#sample-code) and [FailoverSampleApp2](#sample-code-1) demonstrate this practice. See the section below on [Failover Exception Codes](#failover-exception-codes) for more details.
 >2. It is highly recommended that you use the cluster and read-only cluster endpoints instead of the direct instance endpoints of your Aurora cluster, unless you are confident about your application's usage of instance endpoints. Although the Driver will correctly failover to the new writer instance when using instance endpoints, usage of these endpoints are discouraged because individual instances can spontaneously change reader/writer status when failover occurs. The driver will always connect directly to the instance specified if an instance endpoint is provided, so a write-safe connection cannot be assumed if the application uses instance endpoints.
 
+### AWS IAM Database Authentication
+
+An optional authentication method is to use Amazon AWS Identity and Access Management (IAM).
+When using AWS IAM database authentication, host URL must be a valid Amazon endpoint, and not a custom domain or an IP address.
+Here is an example: `database-mysql-name.cluster-XYZ.us-east-2.rds.amazonaws.com`
+
+AWS IAM database authentication is limited to certain database engines. 
+For more information on limitations and recommendations, please refer to [IAM database authentication for MySQL and PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html).
+
+#### Setup for IAM Database Authentication for MySQL
+1. Enable AWS IAM database authentication for existing database or create a new database on AWS RDS Console.
+   1. [Create a new database](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateDBInstance.html).
+   2. [Modify an existing database](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html). 
+2. To allow an AWS IAM user or role to connect to the DB instance, they must have sufficient permissions.
+   See [Creating and using an IAM policy for IAM database access](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html).
+3. To use AWS IAM database authentication with PostgreSQL, create a database user and grant them the `rds_iam` role as follows:
+    ```
+    CREATE USER db_userx;
+    GRANT rds_iam TO db_userx;
+    ```
+For more information, please refer to [Creating a database account using IAM authentication](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.DBAccounts.html#UsingWithRDS.IAMDBAuth.DBAccounts.PostgreSQL).
+
+#### Using AWS IAM Database Authentication
+| Parameter       | Value           | Default Value      | Description  |
+| ------------- |:-------------:|:-------------:| ----- |
+|`useAwsIam` | Boolean | `false` | Set to `true` to use AWS IAM database authentication. |
+
+##### Sample Code
+```java
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Properties;
+
+import software.aws.rds.jdbc.mysql.shading.com.mysql.cj.conf.PropertyKey;
+import software.aws.rds.jdbc.mysql.Driver;
+
+public class AwsIamAuthenticationSample {
+  private static final String CONNECTION_STRING = "jdbc:postgresql:aws://database-mysql-name.cluster-XYZ.us-east-2.rds.amazonaws.com:5432/postgres";
+  private static final String USER = "example_user_name";
+
+  public static void main(String[] args) throws SQLException {
+    final Properties properties = new Properties();
+    properties.setProperty(PGProperty.USER.getName(), USERNAME);
+    properties.setProperty(PGProperty.USE_AWS_IAM.getName(), Boolean.TRUE.toString());
+
+    try (Connection conn = DriverManager.getConnection(CONNECTION_STRING, properties)) {
+      try (Statement stmt1 = conn.createStatement()) {
+        try (ResultSet rs = stmt1.executeQuery("SELECT NOW()")) {
+          while (rs.next()) {
+            System.out.println(rs.getTimestamp(1));
+          }
+        }
+      }
+    }
+  }
+}
+```
+
 ## Development
 
 ### Setup
