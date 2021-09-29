@@ -6,8 +6,6 @@
 
 package org.postgresql.core.v3.plugins;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
-
 public interface IAuthenticationPlugin {
-  byte[] getEncodedPassword(String user, @Nullable String password);
+  byte[] getEncodedPassword(String user, String password);
 }

@@ -38,7 +38,6 @@ import org.postgresql.util.PSQLState;
 import org.postgresql.util.ServerErrorMessage;
 import org.postgresql.util.internal.Unsafe;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
@@ -79,6 +78,7 @@ public class ConnectionFactoryImpl extends ConnectionFactory {
   private static final int AUTH_REQ_SASL = 10;
   private static final int AUTH_REQ_SASL_CONTINUE = 11;
   private static final int AUTH_REQ_SASL_FINAL = 12;
+  private static final int DEFAULT_PORT = 5342;
 
   private ISSPIClient createSSPI(PGStream pgStream,
       @Nullable String spnServiceClass,
@@ -683,16 +683,22 @@ public class ConnectionFactoryImpl extends ConnectionFactory {
                         PSQLState.CONNECTION_REJECTED);
                   }
 
-                  @NonNull final String portProperty = info.getProperty(PGProperty.PG_PORT.getName());
-                  final int port = Integer.parseInt(portProperty);
+                  final String portProperty = info.getProperty(PGProperty.PG_PORT.getName());
+                  final int port = (portProperty == null)
+                      ? DEFAULT_PORT
+                      : Integer.parseInt(portProperty);
+
                   pluginManager.setPlugin(new AwsIamAuthenticationPlugin(host, port));
-                } else {
-                  if (password == null) {
-                    throw new PSQLException(
-                        GT.tr(
-                            "The server requested password-based authentication, but no password was provided."),
-                        PSQLState.CONNECTION_REJECTED);
-                  }
+
+                  // Clear password if AWS IAM database authentication is in use.
+                  password = "";
+                }
+
+                if (password == null) {
+                  throw new PSQLException(
+                      GT.tr(
+                          "The server requested password-based authentication, but no password was provided."),
+                      PSQLState.CONNECTION_REJECTED);
                 }
 
                 byte[] encodedPassword = pluginManager.getPassword(user, password);

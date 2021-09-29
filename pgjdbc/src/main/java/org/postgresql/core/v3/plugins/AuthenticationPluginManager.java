@@ -6,8 +6,6 @@
 
 package org.postgresql.core.v3.plugins;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
-
 public class AuthenticationPluginManager {
 
   // Use native password plugin by default.
@@ -17,7 +15,7 @@ public class AuthenticationPluginManager {
     this.plugin = plugin;
   }
 
-  public byte[] getPassword(final String user, @Nullable final String password) {
+  public byte[] getPassword(final String user, String password) {
     return this.plugin.getEncodedPassword(user, password);
   }
 }
