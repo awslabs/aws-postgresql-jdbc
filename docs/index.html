@@ -61,19 +61,19 @@
   <section class="mdl-article">
     <article class="m-content">
       <section>
-        <p><b>Amazon Web Services (AWS) JDBC Driver for PostgreSQL</b> is a driver that enables applications to take
+        <p><b>Amazon Web Services (AWS) JDBC Driver for PostgreSQL</b> is a driver that allows an application to take
           full advantage of the features of clustered PostgreSQL databases. It is based on and can be used as a drop-in
-          compatible for the <a href="https://github.com/pgjdbc/pgjdbc" target="new">PostgreSQL JDBC Driver</a> and is
+          compatible for the <a href="https://github.com/pgjdbc/pgjdbc" target="new">PostgreSQL JDBC Driver</a>. It is
           compatible with all PostgreSQL deployments.</p>
-        <p>The AWS JDBC Driver for PostgreSQL currently enables fast failover for Amazon Aurora with PostgreSQL
+        <p>The AWS JDBC Driver for PostgreSQL enables fast failover for Amazon Aurora with PostgreSQL
           compatibility. Support for additional features of clustered databases, including features of Amazon RDS for
           PostgreSQL and on-premises PostgreSQL deployments, is planned.</p>
         <p><em>
-            IMPORTANT Because this project is in preview, you may see breaking changes throughout. We encourage you to
-            experiment with PostgreSQL driver but DO NOT adopt it for production use. Use of PostgreSQL driver in
-            preview is subject to the terms and conditions contained in the <a
-              href="https://aws.amazon.com/service-terms/" target="new">AWS Service Terms</a>, particularly the Beta Service
-            Participation Service Terms, and apply to any drivers not marked as 'Generally Available'.
+            IMPORTANT Because this project is in preview, we encourage you to
+            experiment with PostgreSQL driver but DO NOT adopt it for production use. Use of the PostgreSQL driver in
+            preview is subject to the terms and conditions provided in the <a
+              href="https://aws.amazon.com/service-terms/" target="new">AWS Service Terms</a>. The Beta Service
+            Participation Service Terms apply to any driver not marked as 'Generally Available'.
           </em></p>
       </section>
     </article>
@@ -85,13 +85,13 @@
         <p>Developers use software libraries, known as database connectivity drivers (or simply drivers), to connect
           applications to databases. A driver converts SQL queries in an application into a protocol language to
           communicate with the database and returns query results to the application. The AWS JDBC Driver for PostgreSQL
-          is optimally configured to enable applications to connect to and take advantage of the features of clustered
+          is optimally configured to allow an application to connect to and take advantage of the features of clustered
           PostgreSQL database deployments.
-        <p><b>Enabling Fast Failover for Amazon Aurora</b><br>In Amazon Aurora, failover is a mechanism by which the
-          database automatically repairs the cluster status when a primary DB instance becomes unavailable. It achieves
-          this by electing a database replica to become the new primary DB instance, so that the cluster can provide
+        <p><b>Supporting Fast Failover for Amazon Aurora</b><br>In Amazon Aurora, failover is a mechanism by which the
+          database automatically repairs the cluster status when a primary DB instance becomes unavailable. During failover, 
+          Aurora elects a database replica to become the new primary DB instance, so the cluster can provide
           maximum availability to a primary read-write DB instance.</p>
-        <p>Before a replica instance can be elevated to the primary DB instance, the DNS record must be updated in order
+        <p>Before a replica instance can be promoted to the primary DB instance, the DNS record must be updated in order
           to properly direct the connection. This process can take up to several minutes. The AWS JDBC Driver for
           PostgreSQL is designed to coordinate with this behavior in order to provide minimal downtime. It achieves this
           by maintaining a cache of the PostgreSQL cluster topology and each instance's role (replica or primary DB
@@ -120,7 +120,7 @@
           <header>Seamless Deployment</header>
           <section>
             The AWS JDBC Driver for PostgreSQL is based on and is drop-in compatible with the PostgreSQL JDBC Driver,
-            so users can replace it in their applications with little code changes.
+            so you can replace it in your application with few code changes.
           </section>
         </article>
         <article class="m-item" style="position: absolute; left: 594px; top: 0px;">
@@ -151,9 +151,9 @@
         <article class="m-item" style="position: absolute; left: 594px; top: 0px;">
           <header>How do I use the AWS JDBC Driver for PostgreSQL?</header>
           <section>
-            The AWS JDBC Driver for PostgreSQL is drop-in compatible for the PostgreSQL JDBC Driver. You can replace
-            your existing driver with the AWS JDBC Driver for PostgreSQL following the same steps used to update an
-            existing driver. Changes to the connection string is all that is needed. Installation instructions can be
+            The AWS JDBC Driver for PostgreSQL is drop-in compatible for the PostgreSQL JDBC Driver. To replace
+            your existing driver with the AWS JDBC Driver for PostgreSQL, follow the same steps used to update the
+            current driver. Then, update the client connection string to use the AWS protocol when connecting. Installation instructions can be
             found <a href="https://github.com/awslabs/aws-postgresql-jdbc#install-aws-jdbc-driver-for-postgresql"
               target="new">here</a>.
           </section>
@@ -166,7 +166,7 @@
           </section>
         </article>
         <article class="m-item" style="position: absolute; left: 0px; top: 377px;">
-          <header>How can I get help or open issues?</header>
+          <header>How can I get help or open an issue?</header>
           <section>
             You can get help or open issues related to the AWS JDBC Driver for PostgreSQL on Github <a
               href="https://github.com/awslabs/aws-postgresql-jdbc#getting-help-and-opening-issues"
@@ -181,7 +181,7 @@
           </section>
         </article>
         <article class="m-item" style="position: absolute; left: 0px; top: 203px;">
-          <header>Can I create my own driver from this?</header>
+          <header>Can I create my own driver from this project?</header>
           <section>
             Yes! The driver is open source under the BSD-2 license clause. This means you are free to modify the driver
             to fit your particular needs.
