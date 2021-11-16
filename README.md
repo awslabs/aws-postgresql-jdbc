@@ -5,11 +5,11 @@
 [![Javadoc](https://javadoc.io/badge2/software.aws.rds/aws-postgresql-jdbc/javadoc.svg?kill_cache=1)](https://javadoc.io/doc/software.aws.rds/aws-postgresql-jdbc)
 [![License](https://img.shields.io/badge/License-BSD--2--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
 
-**The Amazon Web Services (AWS) JDBC Driver for PostgreSQL** is a driver that enables applications to take full advantage of the features of clustered PostgreSQL databases. It is drop-in compatible and based on the [PostgreSQL JDBC Driver](https://github.com/pgjdbc/pgjdbc), and is compatible with all PostgreSQL deployments.
+**The Amazon Web Services (AWS) JDBC Driver for PostgreSQL** allows an application to take advantage of the features of clustered PostgreSQL databases. It is based on and is drop-in compatible with the [PostgreSQL JDBC Driver](https://github.com/pgjdbc/pgjdbc), and is compatible with all PostgreSQL deployments.
 
-The AWS JDBC Driver for PostgreSQL currently enables fast failover for Amazon Aurora with PostgreSQL compatibility. Support for additional features of clustered databases, including features of Amazon RDS for PostgreSQL and on-premises PostgreSQL deployments, is planned.
+The AWS JDBC Driver for PostgreSQL supports fast failover for Amazon Aurora with PostgreSQL compatibility. Support for additional features of clustered databases, including features of Amazon RDS for PostgreSQL and on-premises PostgreSQL deployments, is planned.
 
-> **IMPORTANT** Because this project is in preview, you may see breaking changes throughout. We encourage you to experiment with the PostgreSQL driver but DO NOT adopt it for production use. Use of the PostgreSQL driver in preview is subject to the terms and conditions contained in the [AWS Service Terms](https://aws.amazon.com/service-terms), particularly the Beta Service Participation Service Terms, and apply to any drivers not marked as 'Generally Available'.
+> **IMPORTANT** Because this project is in preview, we encourage you to experiment with the PostgreSQL driver but DO NOT recommend adopting it for production use. Use of the PostgreSQL driver in preview is subject to the terms and conditions contained in the [AWS Service Terms](https://aws.amazon.com/service-terms), (particularly the Beta Service Participation Service Terms) This applies to any drivers not marked as 'Generally Available'.
 
 ## What is Failover?
 
@@ -17,23 +17,23 @@ In an Amazon Aurora DB cluster, failover is a mechanism by which Aurora automati
 
 ## Benefits of the AWS JDBC Driver for PostgreSQL
 
-Although Aurora is able to provide maximum availability through the use of failover, existing client drivers do not currently take full advantage of this functionality. This is partially due to the time required for the DNS of the new primary DB instance to be fully resolved in order to properly direct the connection. The AWS JDBC Driver for PostgreSQL fully utilizes failover behavior by maintaining a cache of the Aurora cluster topology and each DB instance's role (Aurora Replica or primary DB instance). This topology is provided via a direct query to the Aurora database, essentially providing a shortcut to bypass the delays caused by DNS resolution. With this knowledge, the AWS JDBC Driver can more closely monitor the Aurora DB cluster status so that a connection to the new primary DB instance can be established as fast as possible. Additionally, as noted above, the AWS JDBC Driver is designed to be a drop-in compatible for other PostgreSQL JDBC drivers and can be used to interact with regular RDS and PostgreSQL databases as well as Aurora PostgreSQL.
+Although Aurora is able to provide maximum availability through the use of failover, existing client drivers do not currently support this functionality. This is partially due to the time required for the DNS of the new primary DB instance to be fully resolved in order to properly direct the connection. The AWS JDBC Driver for PostgreSQL fully utilizes failover behavior by maintaining a cache of the Aurora cluster topology and each DB instance's role (Aurora Replica or primary DB instance). This topology is provided via a direct query to the Aurora database, essentially providing a shortcut to bypass the delays caused by DNS resolution. With this knowledge, the AWS JDBC Driver can more closely monitor the Aurora DB cluster status so that a connection to the new primary DB instance can be established as fast as possible. Additionally, as noted above, the AWS JDBC Driver is designed to be a drop-in compatible for other PostgreSQL JDBC drivers and can be used to interact with regular RDS and PostgreSQL databases as well as Aurora PostgreSQL.
 
 ## The AWS JDBC Driver Failover Process
 
 <div style="text-align:center"><img src="./docs/files/images/failover_diagram.png" /></div>
 
-The figure above provides a simplified overview of how the AWS JDBC Driver handles an Aurora failover encounter. Starting at the top of the diagram, an application with the AWS JDBC Driver on its class path uses the driver to get a logical connection to an Aurora database. In this example, the application requests a connection using the Aurora DB cluster endpoint and is returned a logical connection that is physically connected to the primary DB instance in the DB cluster, DB instance C. Due to how the application operates against the logical connection, the physical connection details about which specific DB instance it is connected to have been abstracted away. Over the course of the application's lifetime, it executes various statements against the logical connection. If DB instance C is stable and active, these statements succeed and the application continues as normal. If DB instance C later experiences a failure, Aurora will initiate failover to promote a new primary DB instance. At the same time, the AWS JDBC Driver will intercept the related communication exception and kick off its own internal failover process. In this case, in which the primary DB instance has failed, the driver will use its internal topology cache to temporarily connect to an active Aurora Replica. This Aurora Replica will be periodically queried for the DB cluster topology until the new primary DB instance is identified (DB instance A or B in this case). At this point, the driver will connect to the new primary DB instance and return control to the application by raising a SQLException with SQLState 08S02 so that they can re-configure their session state as required. Although the DNS endpoint for the DB cluster might not yet resolve to the new primary DB instance, the driver has already discovered this new DB instance during its failover process and will be directly connected to it when the application continues executing statements. In this way the driver provides a faster way to reconnect to a newly promoted DB instance, thus increasing the availability of the DB cluster.
+The figure above provides a simplified overview of how the AWS JDBC Driver handles an Aurora failover encounter. Starting at the top of the diagram, an application with the AWS JDBC Driver on its class path uses the driver to get a logical connection to an Aurora database. In this example, the application requests a connection using the Aurora DB cluster endpoint and is returned a logical connection that is physically connected to the primary DB instance in the DB cluster, DB instance C. Due to how the application operates against the logical connection, the physical connection details about which specific DB instance it is connected to have been abstracted away. Over the course of the application's lifetime, it executes various statements against the logical connection. If DB instance C is stable and active, these statements succeed and the application continues as normal. If DB instance C later experiences a failure, Aurora will initiate failover to promote a new primary DB instance. At the same time, the AWS JDBC Driver will intercept the related communication exception and kick off its own internal failover process. In this case, in which the primary DB instance has failed, the driver will use its internal topology cache to temporarily connect to an active Aurora Replica. This Aurora Replica will be periodically queried for the DB cluster topology until the new primary DB instance is identified (DB instance A or B in this case). At this point, the driver will connect to the new primary DB instance and return control to the application by raising a SQLException with SQLState 08S02 so that they can reconfigure their session state as required. Although the DNS endpoint for the DB cluster might not yet resolve to the new primary DB instance, the driver has already discovered this new DB instance during its failover process and will be directly connected to it when the application continues executing statements. In this way the driver provides a faster way to reconnect to a newly promoted DB instance, thus increasing the availability of the DB cluster.
 
 ## Getting Started
 
 ### Minimum Requirements
-Use of the AWS JDBC Driver for PostgreSQL requires Amazon Corretto 8+ or Java 8+.
+You need to install Amazon Corretto 8+ or Java 8+ before using the AWS JDBC Driver for PostgreSQL.
 
 ### Obtaining the AWS JDBC Driver for PostgreSQL
 
 #### Direct Download
-The AWS JDBC Driver for PostgreSQL can be installed from pre-compiled packages that can be downloaded directly from [GitHub Releases](https://github.com/awslabs/aws-postgresql-jdbc/releases) or [Maven Central](https://search.maven.org/search?q=g:software.aws.rds). Installing the driver requires obtaining the corresponding JAR file and including it in the application's CLASSPATH.
+The AWS JDBC Driver for PostgreSQL can be installed from pre-compiled packages that can be downloaded directly from [GitHub Releases](https://github.com/awslabs/aws-postgresql-jdbc/releases) or [Maven Central](https://search.maven.org/search?q=g:software.aws.rds). To install the driver, obtain the corresponding JAR file and include it in the application's CLASSPATH.
 
 **Example - Direct Download via wget**
 ```bash
@@ -46,7 +46,7 @@ export CLASSPATH=$CLASSPATH:/home/userx/libs/aws-postgresql-jdbc-0.1.0.jar
 ```
 
 #### As a Maven Dependency
-Alternatively, the driver can be obtained automatically via [Maven's dependency management](https://search.maven.org/search?q=g:software.aws.rds) by adding the following configuration in the application's Project Object Model (POM) file:
+You can use [Maven's dependency management](https://search.maven.org/search?q=g:software.aws.rds) to obtain the driver by adding the following configuration in the application's Project Object Model (POM) file:
 
 **Example - Maven**
 ```xml
@@ -59,7 +59,7 @@ Alternatively, the driver can be obtained automatically via [Maven's dependency 
 </dependencies>
 ```
 #### As a Gradle Dependency
-Alternatively, the driver can be obtained automatically via [Gradle's dependency management](https://search.maven.org/search?q=g:software.aws.rds) by adding the following configuration in the application's ```build.gradle``` file:
+You can use [Gradle's dependency management](https://search.maven.org/search?q=g:software.aws.rds) to obtain the driver by adding the following configuration in the application's ```build.gradle``` file:
 
 **Example - Gradle**
 ```gradle
@@ -68,10 +68,10 @@ dependencies {
 }
 ```
 ### Using the AWS JDBC Driver for PostgreSQL
-As a drop-in compatible, usage of the AWS JDBC Driver for PostgreSQL is identical to the [PostgreSQL JDBC Driver](https://github.com/pgjdbc/pgjdbc). The sections below highlight usage specific to failover.
+The AWS JDBC Driver for MySQL is drop-in compatible, so usage is identical to the [PostgreSQL JDBC Driver](https://github.com/pgjdbc/pgjdbc). The sections below highlight usage specific to failover.
 
 #### Driver Name
-The driver name to use is: ```software.aws.rds.jdbc.postgresql.Driver```. This will be needed when loading the driver explicitly to the driver manager.
+Use the driver name: ```software.aws.rds.jdbc.postgresql.Driver```. You will need this name when loading the driver explicitly to the driver manager.
 
 #### Driver Protocol
 Currently, the driver only supports the following protocol for the connection string:
@@ -79,13 +79,13 @@ Currently, the driver only supports the following protocol for the connection st
 
 #### Connection URL Descriptions
 
-There are many different types of URLs that can connect to an Aurora DB cluster. For some of these URL types, the AWS JDBC Driver requires the user to provide some information about the Aurora DB cluster to provide failover functionality. This section outlines the various URL types. For each type, information is provided on how the driver will behave and what information the driver requires about the DB cluster, if applicable.
+There are many different types of URLs that can connect to an Aurora DB cluster; this section outlines the various URL types. For some URL types, the AWS JDBC Driver requires the user to provide some information about the Aurora DB cluster to provide failover functionality.  For each URL type, information is provided below about how the driver will behave and what information the driver requires about the DB cluster, if applicable.
 
-Note: The connection string follows standard URL parameters. In order to add parameters to the connection string, simply add `?` and then append `parameter_name=value` at the end of the connection string. You may add multiple parameters by separating the parameter name and value set (`parameter_name=value`) with the `&` symbol. For example, to add 2 parameters simply add `?param_name=value&param_2=value2` at the end of the connection string.
+Note: The connection string follows standard URL parameters. To add parameters to the connection string, simply add `?` and then the `parameter_name=value` pair at the end of the connection string. You can add multiple parameters by separating the parameter name and value pair (`parameter_name=value`) with the `&` symbol. For example, to add 2 parameters simply add `?param_name=value&param_2=value2` at the end of the connection string.
  
 
-| URL Type        | Example           | Required Parameters  | Driver Behavior |
-| ------------- |-------------| :-----:| --- |
+| URL Type      | Example         | Required Parameters | Driver Behavior |
+| :------------ | :-------------: | :-----------------: | :-------------- |
 | Cluster Endpoint      | `jdbc:postgresql:aws://db-identifier.cluster-XYZ.us-east-2.rds.amazonaws.com:5432` | None | *Initial connection:* primary DB instance<br/>*Failover behavior:* connect to the new primary DB instance |
 | Read-Only Cluster Endpoint      | `jdbc:postgresql:aws://db-identifier.cluster-ro-XYZ.us-east-2.rds.amazonaws.com:5432`      |   None |  *Initial connection:* any Aurora Replica<br/>*Failover behavior:* prioritize connecting to any active Aurora Replica but might connect to the primary DB instance if it provides a faster connection|
 | Instance Endpoint | `jdbc:postgresql:aws://instance-1.XYZ.us-east-2.rds.amazonaws.com:5432`      |    None | *Initial connection:* the instance specified (DB instance 1)<br/>*Failover behavior:* connect to the primary DB instance|
@@ -94,16 +94,16 @@ Note: The connection string follows standard URL parameters. In order to add par
 | Custom Domain | `jdbc:postgresql:aws://my-custom-domain.com:5432`      |    `clusterInstanceHostPattern` | *Initial connection:* the DB instance specified<br/>*Failover behavior:* connect to the primary DB instance |
 | Non-Aurora Endpoint | `jdbc:postgresql:aws://localhost:5432`     |    None | A regular JDBC connection will be returned - no failover functionality |
 
-(Information about the `clusterInstanceHostPattern` is mentioned in the section below.)
+Information about the `clusterInstanceHostPattern` is provided in the section below.
 
 For more information about parameters that can be configured with the AWS JDBC Driver, see the section below about failover parameters.
 
 #### Failover Parameters
 
-In addition to [the parameters that can be configured for the PostgreSQL JDBC Driver](https://jdbc.postgresql.org/documentation/head/connect.html), the following parameters can also be passed to the AWS JDBC Driver through the connection URL to configure additional driver behavior.
+In addition to [the parameters that you can configure for the PostgreSQL JDBC Driver](https://jdbc.postgresql.org/documentation/head/connect.html), you can pass the following parameters to the AWS JDBC Driver through the connection URL to specify additional driver behavior.
 
-| Parameter       | Value           | Required      | Description  |
-| ------------- |:-------------:|:-------------:| ----- |
+| Parameter    | Value    | Required      | Description |
+| :----------: | :------: |:-------------:| :---------- |
 |`enableClusterAwareFailover` | Boolean | No | Set to true to enable the fast failover behavior offerred by the AWS JDBC Driver. Set to false for simple JDBC connections that do not require fast failover functionality.<br/><br/>**Default value:** `true` |
 |`clusterInstanceHostPattern` | String | If connecting using an IP address or custom domain URL: Yes<br/>Otherwise: No | This parameter is not required unless connecting to an AWS RDS cluster via an IP address or custom domain URL. In those cases, this parameter specifies the cluster instance DNS pattern that will be used to build a complete instance endpoint. A "?" character in this pattern should be used as a placeholder for the DB instance identifiers of the instances in the cluster. <br/><br/>Example: `?.my-domain.com`, `any-subdomain.?.my-domain.com:9999`<br/><br/>Usecase Example: If your cluster instance endpoints followed this pattern:`instanceIdentifier1.customHost.com`, `instanceIdentifier2.customHost.com`, etc. and you wanted your initial connection to be `customHost.com:1234`, then your connection string should look something like this: `jdbc:postgresql:aws://customHost.com:1234/test?clusterInstanceHostPattern=?.customHost.com`<br/><br/>**Default value:** if unspecified, and the provided connection string is not an IP address or custom domain, the driver will automatically acquire the cluster instance host pattern from the customer-provided connection string. |
 |`clusterId` | String | No | A unique identifier for the cluster. Connections with the same cluster id share a cluster topology cache. This connection parameter is not required and thus should only be set if desired. <br/><br/>**Default value:** If unspecified, the driver will automatically acquire a cluster id for AWS RDS clusters. |
@@ -115,12 +115,12 @@ In addition to [the parameters that can be configured for the PostgreSQL JDBC Dr
 |`gatherPerfMetrics` | Boolean | No | Set to true if you would like the driver to record failover-associated metrics, which will then be logged upon closing the connection. <br/><br/>**Default value:** `false` | 
 #### Failover Exception Codes
 ##### 08001 - Unable to Establish SQL Connection
-When the driver throws a SQLException with code ```08001```, it means the original connection failed, and the driver tried to failover to a new instance, but was unable to. There are various reasons this may happen: no nodes were available, a network failure occurred, etc. In this scenario, please wait until the server is up or other problems are solved. (Exception will be thrown.)
+When the driver throws a SQLException with code ```08001```, the original connection has failed, and the driver tried to failover to a new instance, but was unable to. There are various reasons this may happen: no nodes were available, a network failure occurred, and so on. In this scenario, please wait until the server is up or other problems are solved. (Exception will be thrown.)
 
 ##### 08S02 - Communication Link 
-When the driver throws a SQLException with code ```08S02```, it means the original connection failed while autocommit was set to true, and the driver successfully failed over to another available instance in the cluster. However, any session state configuration of the initial connection is now lost. In this scenario, the user should:
+When the driver throws a SQLException with code ```08S02```, the original connection has failed while autocommit was set to true, and the driver successfully failed over to another available instance in the cluster. However, any session state configuration of the initial connection is now lost. In this scenario, the user should:
 
-- Reuse and re-configure the original connection (e.g., Re-configure session state to be the same as the original connection).
+- Reuse and reconfigure the original connection (e.g., reconfigure session state to be the same as the original connection).
 
 - Repeat that query which was executed when the connection failed and continue work as desired.
 
@@ -184,7 +184,7 @@ public class FailoverSampleApp1 {
     
         // Failover has occurred and the driver has failed over to another instance successfully.
         if (e.getSQLState().equalsIgnoreCase("08S02")) {
-          // Re-config the connection.
+          // Reconfigure the connection.
           setInitialSessionState(conn);
           // Re-execute that query again.
           retries++;
@@ -203,11 +203,11 @@ public class FailoverSampleApp1 {
 ```
 
 ##### 08007 - Transaction Resolution Unknown
-When the driver throws a SQLException with code ```08007```, it means the original connection failed within a transaction (while autocommit was set to false). In this scenario, the driver first attempts to rollback the transaction and then fails over to another available instance in the cluster. Note that the rollback might be unsuccessful as the initial connection may be broken at the time that the driver recognizes the problem. Note also that any session state configuration of the initial connection is now lost. In this scenario, the user should:
+When the driver throws a SQLException with code ```08007```, the original connection has failed within a transaction (while autocommit was set to false). In this scenario, the driver first attempts to rollback the transaction and then fails over to another available instance in the cluster. Note that the rollback might be unsuccessful as the initial connection may be broken at the time that the driver recognizes the problem. Note also that any session state configuration of the initial connection is now lost. In this scenario, you should:
 
-- Reuse and re-configure the original connection (e.g: re-configure session state to be the same as the original connection).
+- Reuse and reconfigure the original connection (e.g: reconfigure session state to be the same as the original connection).
 
-- Re-start the transaction and repeat all queries which were executed during the transaction before the connection failed.
+- Restart the transaction and repeat all queries which were executed during the transaction before the connection failed.
 
 - Repeat that query which was executed when the connection failed and continue work as desired.
 
@@ -273,7 +273,7 @@ public class FailoverSampleApp2 {
 
         // Failure happens within the transaction and the driver failed over to another instance successfully.
         if (e.getSQLState().equalsIgnoreCase("08007")) {
-          // Re-config the connection, re-start the transaction.
+          // Reconfigure the connection, restart the transaction.
           setInitialSessionState(conn);
           // Re-execute every queries that were inside the transaction.
           retries++;
@@ -290,22 +290,20 @@ public class FailoverSampleApp2 {
 ```
 
 >### :warning: Warnings About Proper Usage of the AWS JDBC Driver for PostgreSQL
->1. A common practice when using JDBC drivers is to wrap invocations against a Connection object in a try-catch block, and dispose of the Connection object if an Exception was hit. If this practice is left unaltered, the application will lose the fast-failover functionality offered by the Driver. When failover occurs, the Driver internally establishes a ready-to-use connection inside the original Connection object before throwing an exception to the user. If this Connection object is disposed of, the newly established connection will be thrown away. The correct practice is to check the SQL error code of the exception and reuse the Connection object if the error code indicates successful failover. [FailoverSampleApp1](#sample-code) and [FailoverSampleApp2](#sample-code-1) demonstrate this practice. See the section below on [Failover Exception Codes](#failover-exception-codes) for more details.
->2. It is highly recommended that you use the cluster and read-only cluster endpoints instead of the direct instance endpoints of your Aurora cluster, unless you are confident about your application's usage of instance endpoints. Although the Driver will correctly failover to the new writer instance when using instance endpoints, usage of these endpoints are discouraged because individual instances can spontaneously change reader/writer status when failover occurs. The driver will always connect directly to the instance specified if an instance endpoint is provided, so a write-safe connection cannot be assumed if the application uses instance endpoints.
+>1. A common practice when using JDBC drivers is to wrap invocations against a Connection object in a try-catch block, and dispose of the Connection object if an Exception is hit. If this practice is left unaltered, the application will lose the fast-failover functionality offered by the Driver. When failover occurs, the Driver internally establishes a ready-to-use connection inside the original Connection object before throwing an exception to the user. If this Connection object is disposed of, the newly established connection will be thrown away. The correct practice is to check the SQL error code of the exception and reuse the Connection object if the error code indicates successful failover. [FailoverSampleApp1](#sample-code) and [FailoverSampleApp2](#sample-code-1) demonstrate this practice. See the section below on [Failover Exception Codes](#failover-exception-codes) for more details.
+>2. It is highly recommended that you use the cluster and read-only cluster endpoints instead of the direct instance endpoints of your Aurora cluster, unless you are confident about your application's use of instance endpoints. Although the Driver will correctly failover to the new writer instance when using instance endpoints, use of these endpoints is discouraged because individual instances can spontaneously change reader/writer status when failover occurs. The driver will always connect directly to the instance specified if an instance endpoint is provided, so a write-safe connection cannot be assumed if the application uses instance endpoints.
 
 ### AWS IAM Database Authentication
 
-An optional authentication method is to use Amazon AWS Identity and Access Management (IAM).
-When using AWS IAM database authentication, host URL must be a valid Amazon endpoint, and not a custom domain or an IP address.
-Here is an example: `database-mysql-name.cluster-XYZ.us-east-2.rds.amazonaws.com`
+The driver supports Amazon AWS Identity and Access Management (IAM) authentication. When using AWS IAM database authentication, host URL must be a valid Amazon endpoint, and not a custom domain or an IP address (for example, `database-mysql-name.cluster-XYZ.us-east-2.rds.amazonaws.com`).
 
 AWS IAM database authentication is limited to certain database engines. 
 For more information on limitations and recommendations, please refer to [IAM database authentication for MySQL and PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html).
 
 #### Setup for IAM Database Authentication for MySQL
-1. Enable AWS IAM database authentication for existing database or create a new database on AWS RDS Console.
-   1. [Create a new database](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateDBInstance.html).
-   2. [Modify an existing database](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html). 
+1. Turn on AWS IAM database authentication for the existing database or create a new database on AWS RDS Console.
+   1.  For information about creating a new database, see [the documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateDBInstance.html).
+   2.  For information about modifying an existing database, see [the documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html). 
 2. To allow an AWS IAM user or role to connect to the DB instance, they must have sufficient permissions.
    See [Creating and using an IAM policy for IAM database access](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html).
 3. To use AWS IAM database authentication with PostgreSQL, create a database user and grant them the `rds_iam` role as follows:
@@ -358,14 +356,15 @@ public class AwsIamAuthenticationSample {
 
 ### Setup
 
-After you have installed Amazon Corretto or Java according to the requirements section, use the below command to clone the driver repository.
+After installing Amazon Corretto or Java as directed in the prerequisites section, use the following command to clone the driver repository:
 
 ```bash
 $ git clone https://github.com/awslabs/aws-postgresql-jdbc.git
 $ cd aws-postgresql-jdbc
 ```
 
-Changes can now be made in the repository.
+You can now make changes in the repository.
+
 ### Building the AWS JDBC Driver for PostgreSQL
 
 To build the AWS JDBC Driver without running the tests, navigate into the aws-postgresql-jdbc directory and run the following command:
@@ -374,15 +373,7 @@ To build the AWS JDBC Driver without running the tests, navigate into the aws-po
 gradlew build -x test
 ```
 
-To build the driver and run the tests, Docker must be installed. Refer to the section below and then run the following command
-
-```bash
-gradlew build
-```
-
-### Running the Tests
-
-To run the tests for the AWS JDBC Driver, [Docker](https://docs.docker.com/get-docker/) must be installed. After installing Docker, execute the following commands to create the Docker servers that the tests will run against:
+To build the driver and run the tests, you must first install [Docker](https://docs.docker.com/get-docker/). After installing Docker, use the following commands to create the Docker servers that the tests will run against:
 
 ```bash
 $ cd aws-postgresql-jdbc/docker
@@ -390,13 +381,21 @@ $ docker-compose up -d
 $ cd ../
 ```
 
-You can now run the tests in the ```aws-postgresql-jdbc``` directory using the following command:
+Then, to build the driver, run the following command:
+
+```bash
+gradlew build
+```
+
+### Running the Tests
+
+After building the driver, and installing and configuring Docker, you can run the tests in the ```aws-postgresql-jdbc``` directory with the following command:
 
 ```bash
 gradlew test
 ```
 
-To shut down the Docker servers after finishing testing:
+To shut down the Docker servers when you've finished testing:
 
 ```bash
 $ cd aws-postgresql-jdbc/docker
@@ -406,13 +405,13 @@ $ cd ../
 
 ## Getting Help and Opening Issues
 
-If you encounter a bug with the AWS JDBC Driver for PostgreSQL, we would like to hear about it. Please search the [existing issues](https://github.com/awslabs/aws-postgresql-jdbc/issues) and see if others are also experiencing the issue before opening a new issue. When opening a new issue, we will need the version of AWS JDBC Driver for PostgreSQL, Java language version, OS you’re using, and the PostgreSQL database version you're running against. Please also include reproduction case for the issue when appropriate.
+If you encounter a bug with the AWS JDBC Driver for PostgreSQL, we would like to hear about it. Please search the [existing issues](https://github.com/awslabs/aws-postgresql-jdbc/issues) to see if others are also experiencing the issue before opening a new issue. When opening a new issue, we will need the version of AWS JDBC Driver for PostgreSQL, Java language version, OS you’re using, and the PostgreSQL database version you're running against. Please include a reproduction case for the issue when appropriate.
 
 The GitHub issues are intended for bug reports and feature requests. Keeping the list of open issues lean will help us respond in a timely manner.
 
 ## Documentation
 
-For additional documentation on the AWS JDBC Driver, [please refer to the documentation for the open-source postgresql-connector-j driver that the AWS JDBC Driver was based on](https://jdbc.postgresql.org/documentation/documentation.html).
+For additional documentation about the AWS JDBC Driver, [please refer to the documentation for the open-source postgresql-connector-j driver that the AWS JDBC Driver was based on](https://jdbc.postgresql.org/documentation/documentation.html).
 
 ## License
 
