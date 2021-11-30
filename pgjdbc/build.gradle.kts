@@ -210,7 +210,6 @@ tasks.shadowJar {
 
 tasks.register<Jar>("cleanShadowJar") {
 
-    archiveClassifier.set("all")
     dependsOn("shadowJar")
     includeEmptyDirs = false
 
