@@ -18,6 +18,7 @@ import org.postgresql.buildtools.JavaCommentPreprocessorTask
 
 plugins {
     publishing
+    signing
     // Verification
     checkstyle
     jacoco
@@ -287,7 +288,7 @@ allprojects {
             // Some of the projects might fail to create a file (e.g. no tests or no coverage),
             // So we check for file existence. Otherwise JacocoMerge would fail
             val execFiles =
-                    files(testTasks, javaExecTasks).filter { it.exists() && it.name.endsWith(".exec") }
+                files(testTasks, javaExecTasks).filter { it.exists() && it.name.endsWith(".exec") }
             executionData(execFiles)
         }
 
@@ -550,8 +551,8 @@ allprojects {
                     }
                 }
                 for (p in listOf("server", "port", "database", "username", "password",
-                        "privilegedUser", "privilegedPassword",
-                        "simpleProtocolOnly", "enable_ssl_tests")) {
+                    "privilegedUser", "privilegedPassword",
+                    "simpleProtocolOnly", "enable_ssl_tests")) {
                     passProperty(p)
                 }
             }
@@ -610,13 +611,25 @@ allprojects {
                             forEach { artifact(it) }
                         }
                     }
+
+                    apply(plugin = "signing")
+                    signing {
+                        if (project.hasProperty("signing.keyId") &&
+                            project.property("signing.keyId") != "" &&
+                            project.hasProperty("signing.password") &&
+                            project.property("signing.password") != "" &&
+                            project.hasProperty("signing.secretKeyRingFile") &&
+                            project.property("signing.secretKeyRingFile") != "") {
+                            sign(publishing.publications[project.name])
+                        }
+                    }
                 }
                 // </editor-fold>
                 // <editor-fold defaultstate="collapsed" desc="Configuration of the published pom.xml">
                 create<MavenPublication>(project.name) {
                     groupId = "software.aws.rds"
                     artifactId = "aws-postgresql-jdbc"
-                    version = "0.1.0"
+                    version = buildVersion
                     from(components["java"])
 
                     // Gradle feature variants can't be mapped to Maven's pom
@@ -653,6 +666,18 @@ allprojects {
                     }
                 }
                 // </editor-fold>
+            }
+            repositories {
+                maven {
+                    name = "OSSRH"
+                    url = uri("https://aws.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                    credentials {
+                        username = System.getenv("MAVEN_USERNAME")
+                        password = System.getenv("MAVEN_PASSWORD")
+                    }
+                }
+
+                mavenLocal()
             }
         }
     }
