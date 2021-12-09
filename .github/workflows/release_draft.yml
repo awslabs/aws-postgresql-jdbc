@@ -45,6 +45,14 @@ jobs:
       with:
         gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
         passphrase: ${{ secrets.GPG_PASSPHRASE }}
+    - name: 'Trust GPG Key'
+      run: |
+        gpg --no-tty --command-fd 0 --edit-key ${{ steps.import_gpg.outputs.keyid }} << EOTRUST
+        trust
+        5
+        y
+        quit
+        EOTRUST
     - name: 'Sign Jars'
       run: |
         export GPG_TTY=$(tty)
