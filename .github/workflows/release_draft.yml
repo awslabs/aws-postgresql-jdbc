@@ -48,6 +48,8 @@ jobs:
     - name: 'Sign Jars'
       run: |
         export GPG_TTY=$(tty)
+        KEYGRIP="$(gpg --with-keygrip -K | grep -Pom1 '^ *Keygrip += +\K.*')"
+        /usr/lib/gnupg2/gpg-preset-passphrase -c $KEYGRIP <<< ${{ secrets.GPG_PASSPHRASE }}
         for jar in pgjdbc/build/libs/*.jar; do gpg --detach-sign --armor $jar; done
         for signed in pgjdbc/build/libs/*.asc; do gpg --verify $signed; done
     - name: 'Upload to Release'
