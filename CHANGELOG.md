@@ -1,6 +1,6 @@
 # Changelog
 
-## [Version 0.2.0 (Public Preview)](https://github.com/awslabs/aws-postgresql-jdbc/releases/tag/0.2.0) - 2021-12-01
+## [Version 0.2.0 (Public Preview)](https://github.com/awslabs/aws-postgresql-jdbc/releases/tag/0.2.0) - 2021-12-10
 
 ### Added
   * AWS IAM Authentication is now supported. Usage instructions can be found [here](https://github.com/awslabs/aws-postgresql-jdbc#aws-iam-database-authentication).
