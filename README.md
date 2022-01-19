@@ -54,7 +54,7 @@ You can use [Maven's dependency management](https://search.maven.org/search?q=g:
   <dependency>
     <groupId>software.aws.rds</groupId>
     <artifactId>aws-postgresql-jdbc</artifactId>
-    <version>0.2.0</version>
+    <version>0.1.0</version>
   </dependency>
 </dependencies>
 ```
@@ -64,11 +64,11 @@ You can use [Gradle's dependency management](https://search.maven.org/search?q=g
 **Example - Gradle**
 ```gradle
 dependencies {
-    compile group: 'software.aws.rds', name: 'aws-postgresql-jdbc', version: '0.2.0'
+    compile group: 'software.aws.rds', name: 'aws-postgresql-jdbc', version: '0.1.0'
 }
 ```
 ### Using the AWS JDBC Driver for PostgreSQL
-The AWS JDBC Driver for MySQL is drop-in compatible, so usage is identical to the [PostgreSQL JDBC Driver](https://github.com/pgjdbc/pgjdbc). The sections below highlight usage specific to failover.
+The AWS JDBC Driver for PostgreSQL is drop-in compatible, so usage is identical to the [PostgreSQL JDBC Driver](https://github.com/pgjdbc/pgjdbc). The sections below highlight usage specific to failover.
 
 #### Driver Name
 Use the driver name: ```software.aws.rds.jdbc.postgresql.Driver```. You will need this name when loading the driver explicitly to the driver manager.
@@ -295,12 +295,12 @@ public class FailoverSampleApp2 {
 
 ### AWS IAM Database Authentication
 
-The driver supports Amazon AWS Identity and Access Management (IAM) authentication. When using AWS IAM database authentication, host URL must be a valid Amazon endpoint, and not a custom domain or an IP address (for example, `database-mysql-name.cluster-XYZ.us-east-2.rds.amazonaws.com`).
+The driver supports Amazon AWS Identity and Access Management (IAM) authentication. When using AWS IAM database authentication, host URL must be a valid Amazon endpoint, and not a custom domain or an IP address (for example, `database-postgresql-name.cluster-XYZ.us-east-2.rds.amazonaws.com`).
 
 AWS IAM database authentication is limited to certain database engines. 
 For more information on limitations and recommendations, please refer to [IAM database authentication for MySQL and PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html).
 
-#### Setup for IAM Database Authentication for MySQL
+#### Setup for IAM Database Authentication for PostgreSQL
 1. Turn on AWS IAM database authentication for the existing database or create a new database on AWS RDS Console.
    1.  For information about creating a new database, see [the documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateDBInstance.html).
    2.  For information about modifying an existing database, see [the documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html). 
@@ -327,11 +327,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
-import software.aws.rds.jdbc.mysql.shading.com.mysql.cj.conf.PropertyKey;
-import software.aws.rds.jdbc.mysql.Driver;
+import software.aws.rds.jdbc.postgresql.shading.com.postgresql.cj.conf.PropertyKey;
+import software.aws.rds.jdbc.postgresql.Driver;
 
 public class AwsIamAuthenticationSample {
-  private static final String CONNECTION_STRING = "jdbc:postgresql:aws://database-mysql-name.cluster-XYZ.us-east-2.rds.amazonaws.com:5432/postgres";
+  private static final String CONNECTION_STRING = "jdbc:postgresql:aws://database-postgresql-name.cluster-XYZ.us-east-2.rds.amazonaws.com:5432/postgres";
   private static final String USER = "example_user_name";
 
   public static void main(String[] args) throws SQLException {
