@@ -37,7 +37,7 @@ The AWS JDBC Driver for PostgreSQL can be installed from pre-compiled packages t
 
 **Example - Direct Download via wget**
 ```bash
-wget https://github.com/awslabs/aws-postgresql-jdbc/releases/download/0.1.0/aws-postgresql-jdbc-0.2.0.jar
+wget https://github.com/awslabs/aws-postgresql-jdbc/releases/download/0.2.0/aws-postgresql-jdbc-0.2.0.jar
 ```
 
 **Example - Adding the Driver to the CLASSPATH**
@@ -295,10 +295,10 @@ public class FailoverSampleApp2 {
 
 ### AWS IAM Database Authentication
 
-The driver supports Amazon AWS Identity and Access Management (IAM) authentication. When using AWS IAM database authentication, host URL must be a valid Amazon endpoint, and not a custom domain or an IP address (for example, `database-PostgreSQL-name.cluster-XYZ.us-east-2.rds.amazonaws.com`).
+The driver supports Amazon AWS Identity and Access Management (IAM) authentication. When using AWS IAM database authentication, host URL must be a valid Amazon endpoint, and not a custom domain or an IP address (for example, `database-postgresql-name.cluster-XYZ.us-east-2.rds.amazonaws.com`).
 
 AWS IAM database authentication is limited to certain database engines. 
-For more information on limitations and recommendations, please refer to [IAM database authentication for PostgreSQL and PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html).
+For more information on limitations and recommendations, please refer to [IAM database authentication for MySQL and PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html).
 
 #### Setup for IAM Database Authentication for PostgreSQL
 1. Turn on AWS IAM database authentication for the existing database or create a new database on AWS RDS Console.
@@ -327,11 +327,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
-import software.aws.rds.jdbc.PostgreSQL.shading.com.PostgreSQL.cj.conf.PropertyKey;
-import software.aws.rds.jdbc.PostgreSQL.Driver;
+import software.aws.rds.jdbc.postgresql.shading.com.postgresql.cj.conf.PropertyKey;
+import software.aws.rds.jdbc.postgresql.Driver;
 
 public class AwsIamAuthenticationSample {
-  private static final String CONNECTION_STRING = "jdbc:postgresql:aws://databa©se-PostgreSQL-name.cluster-XYZ.us-east-2.rds.amazonaws.com:5432/postgres";
+  private static final String CONNECTION_STRING = "jdbc:postgresql:aws://database-postgresql-name.cluster-XYZ.us-east-2.rds.amazonaws.com:5432/postgres";
   private static final String USER = "example_user_name";
 
   public static void main(String[] args) throws SQLException {
